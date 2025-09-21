@@ -1,6 +1,5 @@
 // EMS Report System Patch v2.2
 // Adds new personnel names to 703 and 704 dropdowns
-// Author: [Your Name]
 // Date: 2025-01-21
 
 (function() {
@@ -17,8 +16,14 @@
         console.log('✓ Version button updated to v2.2');
     }
     
-    // Override the checkPatchStatus function
-    const originalCheckPatchStatus = window.checkPatchStatus;
+    // Update any other buttons with version text
+    document.querySelectorAll('button').forEach(button => {
+        if (button.textContent.includes('v2.0') || button.textContent.includes('v2.1')) {
+            button.innerHTML = button.innerHTML.replace(/v\d+\.\d+/g, 'v2.2');
+        }
+    });
+    
+    // Override the checkPatchStatus function for the popup
     window.checkPatchStatus = function() {
         const modal = document.createElement('div');
         modal.style.cssText = `
@@ -43,7 +48,7 @@
             <p>LocalStorage: Available</p>
             <p>Editors: 7 found</p>
             <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.2 Active</p>
-            <button onclick="this.parentElement.remove()" style="
+            <button onclick="this.parentElement.remove(); document.querySelector('.backdrop-modal')?.remove();" style="
                 background: white;
                 color: #333;
                 border: none;
@@ -58,6 +63,7 @@
         document.body.appendChild(modal);
         
         const backdrop = document.createElement('div');
+        backdrop.className = 'backdrop-modal';
         backdrop.style.cssText = `
             position: fixed;
             top: 0;
@@ -74,7 +80,7 @@
         document.body.appendChild(backdrop);
     };
     
-    // New names to add
+    // New names to add to dropdowns
     const newNames = [
         'Krause',
         'Morrison',
@@ -94,14 +100,16 @@
         'Dobelmann'
     ];
     
-    // Function to apply the patch
+    // Main patch function
     function applyPatch() {
         try {
             let patchedCount = 0;
             
+            // Get the dropdown elements
             const supervisor703 = document.getElementById('supervisor703');
             const supervisor704 = document.getElementById('supervisor704');
             
+            // Function to add names to a dropdown
             function addOptionsToSelect(selectElement, names, unitNumber) {
                 if (!selectElement) {
                     console.error(`❌ Could not find ${unitNumber} dropdown`);
@@ -110,6 +118,7 @@
                 
                 let addedCount = 0;
                 names.forEach(name => {
+                    // Check if name already exists
                     const exists = Array.from(selectElement.options).some(
                         option => option.value === name || option.text === name
                     );
@@ -119,10 +128,12 @@
                         option.value = name;
                         option.text = name;
                         
+                        // Find the "Add Custom" option if it exists
                         const customOption = Array.from(selectElement.options).find(
                             opt => opt.value === 'custom' || opt.text.includes('Add Custom')
                         );
                         
+                        // Insert before custom option, or at the end
                         if (customOption) {
                             selectElement.insertBefore(option, customOption);
                         } else {
@@ -134,18 +145,18 @@
                 
                 if (addedCount > 0) {
                     console.log(`✓ Added ${addedCount} names to ${unitNumber} dropdown`);
-                    }
+                }
                 return true;
             }
             
-            // Apply to 703 dropdown
+            // Apply names to 703 dropdown
             if (supervisor703) {
                 if (addOptionsToSelect(supervisor703, newNames, '703')) {
                     patchedCount++;
                 }
             }
             
-            // Apply to 704 dropdown
+            // Apply names to 704 dropdown
             if (supervisor704) {
                 if (addOptionsToSelect(supervisor704, newNames, '704')) {
                     patchedCount++;
@@ -161,20 +172,19 @@
         }
     }
     
-    // Apply patch when DOM is ready
+    // Run the patch when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', applyPatch);
     } else {
-        // DOM already loaded
+        // DOM is already loaded
         setTimeout(applyPatch, 100);
     }
     
-    // Also try to apply patch after a delay in case of dynamic content
+    // Also run after a delay for dynamic content
     setTimeout(applyPatch, 1000);
     
 })();
 
-// Version check
+// Set version for verification
 window.EMSPatchVersion = '2.2';
 console.log('EMS Report Patch Version:', window.EMSPatchVersion);
-                    

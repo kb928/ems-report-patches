@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Forces removal of logo borders and updates all version references
+// Fixed: Preserves IN SERVICE border while removing logo borders
 // Date: 2025-01-21
 
 (function() {
@@ -8,50 +8,32 @@
     // Update document title
     document.title = document.title.replace(/v\d+\.\d+/g, 'v2.3');
     
-    // FORCE UPDATE VERSION BUTTON - MORE AGGRESSIVE
+    // FORCE UPDATE VERSION BUTTON
     const forceUpdateVersion = function() {
-        // Find and update the version button
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
-            if (button.textContent.includes('v2.2') || button.textContent.includes('📊')) {
+            if (button.textContent.includes('v2.') || button.textContent.includes('📊')) {
                 button.innerHTML = '📊 v2.3';
-                button.textContent = '📊 v2.3';
             }
         });
-        
-        // Also update window variable if it exists
-        if (window.EMSPatchVersion) {
-            window.EMSPatchVersion = '2.3';
-        }
+        window.EMSPatchVersion = '2.3';
     };
     
-    // FORCE REMOVE GREEN BORDERS - MORE AGGRESSIVE
+    // REMOVE ONLY LOGO BORDERS - NOT IN SERVICE/OUT OF SERVICE BORDERS
     const forceRemoveLogoBorders = function() {
-        // Target ALL elements that might have green borders
         const allElements = document.querySelectorAll('*');
         allElements.forEach(element => {
-            // Check if element has a logo image inside it
-            if (element.querySelector('img[src*=".png"], img[src*=".jpg"], img[src*=".jpeg"], img[alt*="logo" i]') ||
-                element.className.toString().toLowerCase().includes('logo')) {
-                // Force remove any border
-                element.style.setProperty('border', '2px solid transparent', 'important');
-                element.style.setProperty('outline', 'none', 'important');
-                element.style.setProperty('box-shadow', 'none', 'important');
-            }
+            // Only remove borders from elements that contain logo images
+            const hasLogo = element.querySelector('img[src*=".png"], img[src*=".jpg"], img[alt*="logo" i]');
+            const isLogoClass = element.className && element.className.toString().toLowerCase().includes('logo');
             
-            // Specifically target green bordered elements
-            const computedStyle = window.getComputedStyle(element);
-            if (computedStyle.borderColor === 'rgb(40, 167, 69)' || 
-                computedStyle.borderColor === '#28a745') {
-                // Check if this contains a logo
-                if (element.querySelector('img') || element.className.toString().toLowerCase().includes('logo')) {
-                    element.style.setProperty('border', '2px solid transparent', 'important');
-                }
+            if (hasLogo || isLogoClass) {
+                element.style.setProperty('border', '2px solid transparent', 'important');
             }
         });
     };
     
-    // Apply fixes multiple times to ensure they stick
+    // Apply fixes multiple times
     forceUpdateVersion();
     forceRemoveLogoBorders();
     setTimeout(forceUpdateVersion, 200);
@@ -59,9 +41,8 @@
     setTimeout(forceUpdateVersion, 1000);
     setTimeout(forceRemoveLogoBorders, 1000);
     
-    // COMPLETELY OVERRIDE checkPatchStatus function
+    // Override checkPatchStatus
     window.checkPatchStatus = function() {
-        // Remove any existing modals first
         document.querySelectorAll('.modal, .backdrop-modal').forEach(el => el.remove());
         
         const modal = document.createElement('div');
@@ -119,60 +100,69 @@
         };
         document.body.appendChild(backdrop);
         
-        return false; // Prevent any other popup
+        return false;
     };
     
-    // Add aggressive CSS to override borders
+    // Add CSS - FIXED TO PRESERVE IN SERVICE BORDER
     const styles = document.createElement('style');
     styles.innerHTML = `
-        /* FORCE remove logo borders */
+        /* Remove ONLY logo borders */
         .logo-placeholder,
         .logo-container,
-        div:has(> img[alt*="logo" i]),
-        div:has(> img[src*="logo" i]),
-        [class*="logo"] {
+        div:has(> img[alt*="logo" i]):not(:has(.in-service)):not(:has(.out-of-service)) {
             border: 2px solid transparent !important;
             outline: none !important;
             box-shadow: none !important;
         }
         
-        /* Target green borders specifically */
-        [style*="border: 2px solid #28a745"],
-        [style*="border: 2px solid rgb(40, 167, 69)"] {
-            border-color: transparent !important;
+        /* KEEP the IN SERVICE green border */
+        div:has(> h3:contains("IN SERVICE")),
+        div:has(> .in-service),
+        .in-service-box {
+            border: 2px solid #28a745 !important;
+            background-color: #f8fff9 !important;
+        }
+        
+        /* KEEP the OUT OF SERVICE red border */
+        div:has(> h3:contains("OUT OF SERVICE")),
+        div:has(> .out-of-service),
+        .oos-box {
+            border: 2px solid #dc3545 !important;
+            background-color: #fff8f8 !important;
         }
         
         @media print {
-            /* Force color printing */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
             
-            /* Hide all unit management UI when printing */
+            /* Hide UI elements when printing */
             select[id*="Service"],
-            button:contains("Add"),
-            button:contains("Remove"),
-            .add-unit-btn,
-            .remove-unit-btn,
-            [onclick*="addUnit"],
-            [onclick*="removeUnit"] {
-                display: none !important;
-            }
-            
-            /* Hide buttons */
             button {
                 display: none !important;
             }
             
-            /* No borders on logos */
+            /* No borders on logos when printing */
             .logo-placeholder,
             .logo-container,
             img {
                 border: none !important;
             }
             
-            /* Keep other colors */
+            /* Keep service box colors when printing */
+            .in-service-box,
+            div:has(> h3:contains("IN SERVICE")) {
+                border: 2px solid #28a745 !important;
+                background-color: #f8fff9 !important;
+            }
+            
+            .oos-box,
+            div:has(> h3:contains("OUT OF SERVICE")) {
+                border: 2px solid #dc3545 !important;
+                background-color: #fff8f8 !important;
+            }
+            
             h1 {
                 color: #dc3545 !important;
             }
@@ -180,7 +170,7 @@
     `;
     document.head.appendChild(styles);
     
-    // Names for dropdowns (from v2.2)
+    // Names for dropdowns
     const newNames = [
         'Krause', 'Morrison', 'Klaves', 'Phifer', 'Beckenholdt',
         'Simms', 'Carbrey', 'Fournier', 'Lammert', 'Fendelman',
@@ -219,7 +209,6 @@
         }
     }
     
-    // Run patch
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', applyPatch);
     } else {
@@ -230,6 +219,5 @@
     
 })();
 
-// Force version update
 window.EMSPatchVersion = '2.3';
 console.log('EMS Report Patch Version: 2.3');

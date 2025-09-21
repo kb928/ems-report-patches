@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Removes logo borders, hides print elements, updates version display
+// Forces removal of logo borders and updates all version references
 // Date: 2025-01-21
 
 (function() {
@@ -7,153 +7,65 @@
     
     // Update document title
     document.title = document.title.replace(/v\d+\.\d+/g, 'v2.3');
-    console.log('✓ Document title updated to v2.3');
     
-    // UPDATE THE VERSION BUTTON - FIX IT TO SHOW v2.3
-    setTimeout(() => {
-        const versionButton = document.querySelector('button.lock-button[onclick="checkPatchStatus()"]');
-        if (versionButton) {
-            versionButton.innerHTML = '📊 v2.3';
-            console.log('✓ Version button updated to v2.3');
-        }
-    }, 100);
-    
-    // REMOVE GREEN BORDERS FROM LOGOS
-    const removeLogoBorders = function() {
-        // Find logo containers and remove their borders
-        const logoContainers = document.querySelectorAll('.logo-placeholder, .logo-container, [class*="logo"]');
-        logoContainers.forEach(container => {
-            if (container.style) {
-                container.style.border = 'none';
-                container.style.outline = 'none';
-                container.style.boxShadow = 'none';
+    // FORCE UPDATE VERSION BUTTON - MORE AGGRESSIVE
+    const forceUpdateVersion = function() {
+        // Find and update the version button
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            if (button.textContent.includes('v2.2') || button.textContent.includes('📊')) {
+                button.innerHTML = '📊 v2.3';
+                button.textContent = '📊 v2.3';
             }
         });
         
-        // Also target elements with green borders specifically
-        const greenBorderedElements = document.querySelectorAll('[style*="border: 2px solid #28a745"], [style*="border: 2px solid rgb(40, 167, 69)"]');
-        greenBorderedElements.forEach(element => {
-            // Check if this element contains a logo
-            if (element.querySelector('img[alt*="Logo"], img[alt*="logo"], img.logo') || 
-                element.className.includes('logo')) {
-                element.style.border = '2px solid white';
-            }
-        });
-        console.log('✓ Logo borders removed/made white');
+        // Also update window variable if it exists
+        if (window.EMSPatchVersion) {
+            window.EMSPatchVersion = '2.3';
+        }
     };
     
-    // Remove borders on load and after delays
-    removeLogoBorders();
-    setTimeout(removeLogoBorders, 500);
-    setTimeout(removeLogoBorders, 1500);
+    // FORCE REMOVE GREEN BORDERS - MORE AGGRESSIVE
+    const forceRemoveLogoBorders = function() {
+        // Target ALL elements that might have green borders
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(element => {
+            // Check if element has a logo image inside it
+            if (element.querySelector('img[src*=".png"], img[src*=".jpg"], img[src*=".jpeg"], img[alt*="logo" i]') ||
+                element.className.toString().toLowerCase().includes('logo')) {
+                // Force remove any border
+                element.style.setProperty('border', '2px solid transparent', 'important');
+                element.style.setProperty('outline', 'none', 'important');
+                element.style.setProperty('box-shadow', 'none', 'important');
+            }
+            
+            // Specifically target green bordered elements
+            const computedStyle = window.getComputedStyle(element);
+            if (computedStyle.borderColor === 'rgb(40, 167, 69)' || 
+                computedStyle.borderColor === '#28a745') {
+                // Check if this contains a logo
+                if (element.querySelector('img') || element.className.toString().toLowerCase().includes('logo')) {
+                    element.style.setProperty('border', '2px solid transparent', 'important');
+                }
+            }
+        });
+    };
     
-    // Add styles for both screen and print
-    const styles = document.createElement('style');
-    styles.innerHTML = `
-        /* Remove logo borders on screen */
-        .logo-placeholder,
-        .logo-container,
-        [class*="logo"] {
-            border: 2px solid white !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        
-        @media print {
-            /* Force color printing */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            
-            /* HIDE ALL UNIT SELECTION UI ELEMENTS WHEN PRINTING */
-            select[id*="inService"],
-            select[id*="oosSelect"],
-            button:contains("Add Unit"),
-            button:contains("Remove Unit"),
-            .add-unit-btn,
-            .remove-unit-btn,
-            button[onclick*="addUnit"],
-            button[onclick*="removeUnit"],
-            label:contains("Add In Service Unit"),
-            label:contains("Add Out of Service Unit"),
-            option[value=""]:first-child,
-            select option:first-child:empty,
-            select[id*="inService"] + button,
-            select[id*="oosSelect"] + button {
-                display: none !important;
-            }
-            
-            /* Hide the "Add In Service Unit" and "Add Out of Service Unit" text */
-            select[id*="Service"] {
-                display: none !important;
-            }
-            
-            /* Hide add/remove buttons */
-            button:not(.print-button) {
-                display: none !important;
-            }
-            
-            /* Hide lock buttons and version button */
-            .lock-button,
-            button[onclick="checkPatchStatus()"] {
-                display: none !important;
-            }
-            
-            /* Remove borders from logos */
-            .logo-placeholder,
-            .logo-container,
-            img[alt*="Logo"],
-            img[alt*="logo"] {
-                border: none !important;
-                outline: none !important;
-            }
-            
-            /* Keep header colors */
-            h1 {
-                color: #dc3545 !important;
-            }
-            
-            /* Keep green IN SERVICE box (but not for logos) */
-            .in-service-box,
-            div:has(> h3:contains("IN SERVICE")) {
-                border: 2px solid #28a745 !important;
-                background-color: #f8fff9 !important;
-            }
-            
-            /* Keep red OUT OF SERVICE box */
-            .oos-box,
-            div:has(> h3:contains("OUT OF SERVICE")) {
-                border: 2px solid #dc3545 !important;
-                background-color: #fff8f8 !important;
-            }
-            
-            /* Clean up dropdowns for 703/704 */
-            #supervisor703,
-            #supervisor704 {
-                border: 1px solid #ccc !important;
-                background: white !important;
-            }
-            
-            /* Deputy Chief section styling */
-            div:has(> label:contains("DEPUTY CHIEF")) {
-                border: 3px solid #dc3545 !important;
-                background-color: #fff5f5 !important;
-            }
-            
-            /* Force page to use color mode */
-            @page {
-                color: full;
-            }
-        }
-    `;
-    document.head.appendChild(styles);
-    console.log('✓ Styles added for screen and print');
+    // Apply fixes multiple times to ensure they stick
+    forceUpdateVersion();
+    forceRemoveLogoBorders();
+    setTimeout(forceUpdateVersion, 200);
+    setTimeout(forceRemoveLogoBorders, 200);
+    setTimeout(forceUpdateVersion, 1000);
+    setTimeout(forceRemoveLogoBorders, 1000);
     
-    // Override checkPatchStatus for v2.3
+    // COMPLETELY OVERRIDE checkPatchStatus function
     window.checkPatchStatus = function() {
+        // Remove any existing modals first
+        document.querySelectorAll('.modal, .backdrop-modal').forEach(el => el.remove());
+        
         const modal = document.createElement('div');
+        modal.className = 'patch-modal';
         modal.style.cssText = `
             position: fixed;
             top: 50%;
@@ -170,7 +82,7 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.3</strong> (All Issues Fixed)</p>
+            <p><strong>Version: 2.3</strong> (Fully Patched)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
@@ -206,47 +118,85 @@
             backdrop.remove();
         };
         document.body.appendChild(backdrop);
+        
+        return false; // Prevent any other popup
     };
     
-    // New names to add to dropdowns (keeping from v2.2)
+    // Add aggressive CSS to override borders
+    const styles = document.createElement('style');
+    styles.innerHTML = `
+        /* FORCE remove logo borders */
+        .logo-placeholder,
+        .logo-container,
+        div:has(> img[alt*="logo" i]),
+        div:has(> img[src*="logo" i]),
+        [class*="logo"] {
+            border: 2px solid transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Target green borders specifically */
+        [style*="border: 2px solid #28a745"],
+        [style*="border: 2px solid rgb(40, 167, 69)"] {
+            border-color: transparent !important;
+        }
+        
+        @media print {
+            /* Force color printing */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* Hide all unit management UI when printing */
+            select[id*="Service"],
+            button:contains("Add"),
+            button:contains("Remove"),
+            .add-unit-btn,
+            .remove-unit-btn,
+            [onclick*="addUnit"],
+            [onclick*="removeUnit"] {
+                display: none !important;
+            }
+            
+            /* Hide buttons */
+            button {
+                display: none !important;
+            }
+            
+            /* No borders on logos */
+            .logo-placeholder,
+            .logo-container,
+            img {
+                border: none !important;
+            }
+            
+            /* Keep other colors */
+            h1 {
+                color: #dc3545 !important;
+            }
+        }
+    `;
+    document.head.appendChild(styles);
+    
+    // Names for dropdowns (from v2.2)
     const newNames = [
-        'Krause',
-        'Morrison',
-        'Klaves',
-        'Phifer',
-        'Beckenholdt',
-        'Simms',
-        'Carbrey',
-        'Fournier',
-        'Lammert',
-        'Fendelman',
-        'Lalumandier',
-        'Free',
-        'Powers',
-        'Brickey',
-        'Hale',
-        'Dobelmann'
+        'Krause', 'Morrison', 'Klaves', 'Phifer', 'Beckenholdt',
+        'Simms', 'Carbrey', 'Fournier', 'Lammert', 'Fendelman',
+        'Lalumandier', 'Free', 'Powers', 'Brickey', 'Hale', 'Dobelmann'
     ];
     
-    // Main patch function
+    // Add names to dropdowns
     function applyPatch() {
         try {
-            let patchedCount = 0;
-            
-            // Get the dropdown elements
             const supervisor703 = document.getElementById('supervisor703');
             const supervisor704 = document.getElementById('supervisor704');
             
-            // Function to add names to a dropdown
-            function addOptionsToSelect(selectElement, names, unitNumber) {
-                if (!selectElement) {
-                    console.error(`❌ Could not find ${unitNumber} dropdown`);
-                    return false;
-                }
+            function addOptionsToSelect(selectElement, names) {
+                if (!selectElement) return;
                 
-                let addedCount = 0;
                 names.forEach(name => {
-                    // Check if name already exists
                     const exists = Array.from(selectElement.options).some(
                         option => option.value === name || option.text === name
                     );
@@ -255,64 +205,31 @@
                         const option = document.createElement('option');
                         option.value = name;
                         option.text = name;
-                        
-                        // Find the "Add Custom" option if it exists
-                        const customOption = Array.from(selectElement.options).find(
-                            opt => opt.value === 'custom' || opt.text.includes('Add Custom')
-                        );
-                        
-                        // Insert before custom option, or at the end
-                        if (customOption) {
-                            selectElement.insertBefore(option, customOption);
-                        } else {
-                            selectElement.appendChild(option);
-                        }
-                        addedCount++;
+                        selectElement.appendChild(option);
                     }
                 });
-                
-                if (addedCount > 0) {
-                    console.log(`✓ Added ${addedCount} names to ${unitNumber} dropdown`);
-                }
-                return true;
             }
             
-            // Apply names to 703 dropdown
-            if (supervisor703) {
-                if (addOptionsToSelect(supervisor703, newNames, '703')) {
-                    patchedCount++;
-                }
-            }
+            if (supervisor703) addOptionsToSelect(supervisor703, newNames);
+            if (supervisor704) addOptionsToSelect(supervisor704, newNames);
             
-            // Apply names to 704 dropdown
-            if (supervisor704) {
-                if (addOptionsToSelect(supervisor704, newNames, '704')) {
-                    patchedCount++;
-                }
-            }
-            
-            if (patchedCount > 0) {
-                console.log(`✅ EMS Report Patch v2.3 applied successfully to ${patchedCount} dropdowns`);
-            }
-            
+            console.log('✅ Patch v2.3 applied successfully');
         } catch (error) {
-            console.error('❌ Error applying patch:', error);
+            console.error('Error:', error);
         }
     }
     
-    // Run the patch when DOM is ready
+    // Run patch
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', applyPatch);
     } else {
-        // DOM is already loaded
         setTimeout(applyPatch, 100);
     }
     
-    // Also run after a delay for dynamic content
     setTimeout(applyPatch, 1000);
     
 })();
 
-// Set version for verification
+// Force version update
 window.EMSPatchVersion = '2.3';
-console.log('EMS Report Patch Version:', window.EMSPatchVersion);
+console.log('EMS Report Patch Version: 2.3');

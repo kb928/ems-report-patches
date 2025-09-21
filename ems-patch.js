@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Fixed: Preserves IN SERVICE border while removing logo borders
+// Fixed: Properly preserves IN SERVICE border
 // Date: 2025-01-21
 
 (function() {
@@ -19,27 +19,41 @@
         window.EMSPatchVersion = '2.3';
     };
     
-    // REMOVE ONLY LOGO BORDERS - NOT IN SERVICE/OUT OF SERVICE BORDERS
-    const forceRemoveLogoBorders = function() {
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(element => {
-            // Only remove borders from elements that contain logo images
-            const hasLogo = element.querySelector('img[src*=".png"], img[src*=".jpg"], img[alt*="logo" i]');
-            const isLogoClass = element.className && element.className.toString().toLowerCase().includes('logo');
+    // SPECIFICALLY TARGET AND REMOVE ONLY LOGO BORDERS
+    const fixBorders = function() {
+        // First, ensure IN SERVICE box has its green border
+        const inServiceBoxes = document.querySelectorAll('div');
+        inServiceBoxes.forEach(div => {
+            if (div.textContent.includes('IN SERVICE') && !div.querySelector('img')) {
+                div.parentElement.style.border = '2px solid #28a745';
+            }
+        });
+        
+        // Then remove borders ONLY from actual logo containers
+        const logoPlaceholders = document.querySelectorAll('.logo-placeholder');
+        logoPlaceholders.forEach(element => {
+            element.style.border = '2px solid transparent';
+        });
+        
+        // Also check for divs that ONLY contain logo images
+        const allDivs = document.querySelectorAll('div');
+        allDivs.forEach(div => {
+            const hasLogoImage = div.querySelector('img[alt*="Logo" i], img[alt*="logo" i]');
+            const hasServiceText = div.textContent.includes('SERVICE');
             
-            if (hasLogo || isLogoClass) {
-                element.style.setProperty('border', '2px solid transparent', 'important');
+            // Only remove border if it has a logo AND doesn't have SERVICE text
+            if (hasLogoImage && !hasServiceText) {
+                div.style.border = '2px solid transparent';
             }
         });
     };
     
     // Apply fixes multiple times
     forceUpdateVersion();
-    forceRemoveLogoBorders();
+    setTimeout(fixBorders, 100);
     setTimeout(forceUpdateVersion, 200);
-    setTimeout(forceRemoveLogoBorders, 200);
-    setTimeout(forceUpdateVersion, 1000);
-    setTimeout(forceRemoveLogoBorders, 1000);
+    setTimeout(fixBorders, 500);
+    setTimeout(fixBorders, 1500);
     
     // Override checkPatchStatus
     window.checkPatchStatus = function() {
@@ -103,32 +117,17 @@
         return false;
     };
     
-    // Add CSS - FIXED TO PRESERVE IN SERVICE BORDER
+    // Add LESS AGGRESSIVE CSS
     const styles = document.createElement('style');
     styles.innerHTML = `
-        /* Remove ONLY logo borders */
-        .logo-placeholder,
-        .logo-container,
-        div:has(> img[alt*="logo" i]):not(:has(.in-service)):not(:has(.out-of-service)) {
+        /* Only target elements with class logo-placeholder specifically */
+        .logo-placeholder {
             border: 2px solid transparent !important;
-            outline: none !important;
-            box-shadow: none !important;
         }
         
-        /* KEEP the IN SERVICE green border */
-        div:has(> h3:contains("IN SERVICE")),
-        div:has(> .in-service),
-        .in-service-box {
+        /* Make sure IN SERVICE box keeps its green border */
+        div[style*="border: 2px solid #28a745"]:has(div:contains("IN SERVICE")) {
             border: 2px solid #28a745 !important;
-            background-color: #f8fff9 !important;
-        }
-        
-        /* KEEP the OUT OF SERVICE red border */
-        div:has(> h3:contains("OUT OF SERVICE")),
-        div:has(> .out-of-service),
-        .oos-box {
-            border: 2px solid #dc3545 !important;
-            background-color: #fff8f8 !important;
         }
         
         @media print {
@@ -144,23 +143,17 @@
             }
             
             /* No borders on logos when printing */
-            .logo-placeholder,
-            .logo-container,
-            img {
+            .logo-placeholder {
                 border: none !important;
             }
             
             /* Keep service box colors when printing */
-            .in-service-box,
-            div:has(> h3:contains("IN SERVICE")) {
+            div[style*="border: 2px solid #28a745"] {
                 border: 2px solid #28a745 !important;
-                background-color: #f8fff9 !important;
             }
             
-            .oos-box,
-            div:has(> h3:contains("OUT OF SERVICE")) {
+            div[style*="border: 2px solid #dc3545"] {
                 border: 2px solid #dc3545 !important;
-                background-color: #fff8f8 !important;
             }
             
             h1 {

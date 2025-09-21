@@ -1,29 +1,180 @@
-// EMS Report System Patch v2.2
-// Adds new personnel names to 703 and 704 dropdowns
+// EMS Report System Patch v2.3
+// Removes logo locks completely, fixes print styling
 // Date: 2025-01-21
 
 (function() {
-    console.log('Applying EMS Report Patch v2.2...');
+    console.log('Applying EMS Report Patch v2.3...');
     
     // Update document title
-    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.2');
-    console.log('✓ Document title updated to v2.2');
+    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.3');
+    console.log('✓ Document title updated to v2.3');
     
     // UPDATE THE VERSION BUTTON
     const versionButton = document.querySelector('button.lock-button[onclick="checkPatchStatus()"]');
     if (versionButton) {
-        versionButton.innerHTML = versionButton.innerHTML.replace(/v\d+\.\d+/g, 'v2.2');
-        console.log('✓ Version button updated to v2.2');
+        versionButton.innerHTML = versionButton.innerHTML.replace(/v\d+\.\d+/g, 'v2.3');
+        console.log('✓ Version button updated to v2.3');
     }
     
-    // Update any other buttons with version text
-    document.querySelectorAll('button').forEach(button => {
-        if (button.textContent.includes('v2.0') || button.textContent.includes('v2.1')) {
-            button.innerHTML = button.innerHTML.replace(/v\d+\.\d+/g, 'v2.2');
-        }
-    });
+    // REMOVE LOCK EMOJIS FROM LOGOS COMPLETELY (not just for printing)
+    const removeLockEmojis = function() {
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(element => {
+            // Only remove locks near logos, not from other places
+            if (element.className && (element.className.includes('logo') || 
+                element.className.includes('header') || 
+                element.id === 'logoLeft' || 
+                element.id === 'logoRight')) {
+                if (element.innerHTML && element.innerHTML.includes('🔒')) {
+                    element.innerHTML = element.innerHTML.replace(/🔒/g, '');
+                }
+            }
+            // Also check parent elements of images
+            const images = element.querySelectorAll('img[alt*="Logo"], img[alt*="logo"], img.logo');
+            if (images.length > 0 && element.innerHTML && element.innerHTML.includes('🔒')) {
+                element.innerHTML = element.innerHTML.replace(/🔒/g, '');
+            }
+        });
+        console.log('✓ Lock emojis removed from logos');
+    };
     
-    // Override the checkPatchStatus function for the popup
+    // Remove locks when page loads
+    removeLockEmojis();
+    // Remove locks again after a delay in case they're added dynamically
+    setTimeout(removeLockEmojis, 500);
+    setTimeout(removeLockEmojis, 1500);
+    
+    // Add print styles to preserve colors and remove logo borders when printing
+    const printStyles = document.createElement('style');
+    printStyles.innerHTML = `
+        @media print {
+            /* Force color printing */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            /* REMOVE COLORED BORDERS AROUND LOGOS WHEN PRINTING */
+            .logo-placeholder,
+            .logo-container,
+            .logo-wrapper,
+            [class*="logo"] {
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+            }
+            
+            /* Remove borders from logo images specifically */
+            .logo-placeholder img,
+            .logo-container img,
+            img.logo,
+            img[alt*="Logo"],
+            img[alt*="logo"] {
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
+            }
+            
+            /* Hide lock buttons and version button */
+            .lock-button,
+            button[onclick*="lock"],
+            button[onclick*="Lock"],
+            button[onclick="checkPatchStatus()"] {
+                display: none !important;
+            }
+            
+            /* Keep header colors */
+            h1, .header-title {
+                color: #dc3545 !important;
+                font-size: 24px !important;
+            }
+            
+            /* Keep the red header text */
+            [style*="color: #dc3545"],
+            [style*="color:#dc3545"],
+            [style*="color: rgb(220, 53, 69)"] {
+                color: #dc3545 !important;
+            }
+            
+            /* Keep green IN SERVICE box (but not for logos) */
+            [style*="border: 2px solid #28a745"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
+            [style*="border: 2px solid rgb(40, 167, 69)"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
+            .in-service-box {
+                border: 2px solid #28a745 !important;
+                background-color: #f8fff9 !important;
+            }
+            
+            /* Keep red OUT OF SERVICE box (but not for logos) */
+            [style*="border: 2px solid #dc3545"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
+            [style*="border: 2px solid rgb(220, 53, 69)"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
+            .oos-box {
+                border: 2px solid #dc3545 !important;
+                background-color: #fff8f8 !important;
+            }
+            
+            /* Green text for IN SERVICE */
+            [style*="color: #28a745"],
+            [style*="color:#28a745"],
+            [style*="color: rgb(40, 167, 69)"] {
+                color: #28a745 !important;
+                font-weight: bold !important;
+            }
+            
+            /* Red text for OUT OF SERVICE */
+            [style*="color: #dc3545"],
+            [style*="color:#dc3545"] {
+                color: #dc3545 !important;
+                font-weight: bold !important;
+            }
+            
+            /* Keep section backgrounds */
+            .quote-section {
+                background-color: #f8f9fa !important;
+            }
+            
+            /* Hide all edit buttons */
+            button:not(.print-button) {
+                display: none !important;
+            }
+            
+            /* Clean up dropdowns for printing */
+            select {
+                border: 1px solid #ccc !important;
+                padding: 4px !important;
+                background: white !important;
+            }
+            
+            /* Make sure logos print cleanly */
+            .logo-placeholder img,
+            img.logo {
+                display: block !important;
+                max-width: 100px !important;
+                border: none !important;
+            }
+            
+            /* Deputy Chief section styling */
+            [style*="border: 3px solid #dc3545"]:not(.logo-placeholder):not(.logo-container) {
+                border: 3px solid #dc3545 !important;
+                background-color: #fff5f5 !important;
+            }
+            
+            /* Keep gray section headers */
+            [style*="background: #e9ecef"],
+            [style*="background-color: #e9ecef"] {
+                background-color: #e9ecef !important;
+            }
+            
+            /* Force page to use color mode */
+            @page {
+                color: full;
+            }
+        }
+    `;
+    document.head.appendChild(printStyles);
+    console.log('✓ Print styles added');
+    
+    // Override checkPatchStatus for v2.3
     window.checkPatchStatus = function() {
         const modal = document.createElement('div');
         modal.style.cssText = `
@@ -42,12 +193,12 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.2</strong> (Patched with Enhanced Features)</p>
+            <p><strong>Version: 2.3</strong> (Logo Locks Removed)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
             <p>Editors: 7 found</p>
-            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.2 Active</p>
+            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.3 Active</p>
             <button onclick="this.parentElement.remove(); document.querySelector('.backdrop-modal')?.remove();" style="
                 background: white;
                 color: #333;
@@ -80,7 +231,7 @@
         document.body.appendChild(backdrop);
     };
     
-    // New names to add to dropdowns
+    // New names to add to dropdowns (keeping from v2.2)
     const newNames = [
         'Krause',
         'Morrison',
@@ -164,7 +315,7 @@
             }
             
             if (patchedCount > 0) {
-                console.log(`✅ EMS Report Patch v2.2 applied successfully to ${patchedCount} dropdowns`);
+                console.log(`✅ EMS Report Patch v2.3 applied successfully to ${patchedCount} dropdowns`);
             }
             
         } catch (error) {
@@ -186,5 +337,5 @@
 })();
 
 // Set version for verification
-window.EMSPatchVersion = '2.2';
+window.EMSPatchVersion = '2.3';
 console.log('EMS Report Patch Version:', window.EMSPatchVersion);

@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Changes IN SERVICE to blue, removes logo borders, fixes all issues
+// Complete print optimization with date display fix
 // Date: 2025-01-21
 
 (function() {
@@ -19,39 +19,71 @@
         window.EMSPatchVersion = '2.3';
     };
     
-    // CHANGE IN SERVICE TO BLUE AND REMOVE LOGO BORDERS
-    const fixAllBorders = function() {
-        const allDivs = document.querySelectorAll('div');
-        allDivs.forEach(div => {
-            // Check if this has a green border
-            if (div.style.border && div.style.border.includes('rgb(40, 167, 69)') || 
-                div.style.border && div.style.border.includes('#28a745')) {
+    // FIX DATE DISPLAY - Add day of week
+    const fixDateDisplay = function() {
+        const dateInput = document.getElementById('reportDate');
+        if (dateInput) {
+            const date = dateInput.value ? new Date(dateInput.value) : new Date();
+            const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
+            const formattedDate = date.toLocaleDateString('en-US', options);
+            
+            // Create a span to show formatted date for print
+            if (!document.getElementById('printDate')) {
+                const printDate = document.createElement('span');
+                printDate.id = 'printDate';
+                printDate.style.display = 'none';
+                printDate.textContent = formattedDate;
+                dateInput.parentNode.insertBefore(printDate, dateInput.nextSibling);
+            } else {
+                document.getElementById('printDate').textContent = formattedDate;
+            }
+        }
+    };
+    
+    // Update date when changed
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'reportDate') {
+            fixDateDisplay();
+        }
+    });
+    
+    // FIX BORDERS
+    const fixBorders = function() {
+        const allElements = document.querySelectorAll('*');
+        
+        allElements.forEach(element => {
+            const computedStyle = window.getComputedStyle(element);
+            
+            if (computedStyle.borderColor === 'rgb(40, 167, 69)' || 
+                element.style.border && element.style.border.includes('#28a745')) {
                 
-                // If it contains "IN SERVICE", make it blue
-                if (div.textContent.includes('IN SERVICE') && !div.textContent.includes('OUT OF')) {
-                    div.style.border = '2px solid #007bff';
-                    div.style.backgroundColor = '#f0f8ff';
-                } else if (div.querySelector('img')) {
-                    // If it contains a logo image, remove the border
-                    div.style.border = 'none';
+                const hasInService = element.innerHTML && element.innerHTML.includes('IN SERVICE') && 
+                                   !element.innerHTML.includes('OUT OF SERVICE');
+                const hasLogo = element.querySelector('img[alt*="ogo"]') || element.className.includes('logo');
+                
+                if (hasInService) {
+                    element.style.setProperty('border', '2px solid #007bff', 'important');
+                    element.style.setProperty('background-color', '#f0f8ff', 'important');
+                } else if (hasLogo) {
+                    element.style.setProperty('border', 'none', 'important');
                 }
             }
         });
         
-        // Also update the IN SERVICE header text to blue
-        const headers = document.querySelectorAll('h3, h4, div');
-        headers.forEach(header => {
-            if (header.textContent === 'IN SERVICE') {
-                header.style.color = '#007bff';
+        document.querySelectorAll('h3, div').forEach(el => {
+            if (el.textContent === 'IN SERVICE') {
+                el.style.color = '#007bff';
             }
         });
     };
     
-    // Apply fixes multiple times
+    // Apply fixes
     forceUpdateVersion();
-    setTimeout(fixAllBorders, 100);
-    setTimeout(fixAllBorders, 500);
-    setTimeout(fixAllBorders, 1000);
+    fixDateDisplay();
+    setTimeout(fixBorders, 100);
+    setTimeout(fixDateDisplay, 200);
+    setTimeout(fixBorders, 500);
+    setTimeout(fixBorders, 1000);
     
     // Override checkPatchStatus
     window.checkPatchStatus = function() {
@@ -75,7 +107,7 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.3</strong> (Blue IN SERVICE)</p>
+            <p><strong>Version: 2.3</strong> (Fully Optimized)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
@@ -115,13 +147,14 @@
         return false;
     };
     
-    // CSS for consistent blue IN SERVICE
+    // COMPREHENSIVE PRINT STYLES
     const styles = document.createElement('style');
     styles.innerHTML = `
-        /* Change IN SERVICE text to blue */
-        h3:contains("IN SERVICE"),
-        div:contains("IN SERVICE"):not(:contains("OUT OF")) {
-            color: #007bff !important;
+        /* Show formatted date for print */
+        @media screen {
+            #printDate {
+                display: none !important;
+            }
         }
         
         @media print {
@@ -130,22 +163,97 @@
                 print-color-adjust: exact !important;
             }
             
-            /* Hide UI elements when printing */
-            select[id*="Service"],
+            /* HIDE DATE INPUT, SHOW FORMATTED DATE */
+            #reportDate,
+            input[type="date"] {
+                display: none !important;
+            }
+            
+            #printDate {
+                display: inline !important;
+                font-weight: bold !important;
+                font-size: 14pt !important;
+            }
+            
+            /* HIDE ALL DROPDOWNS AND BUTTONS */
+            #inServiceSelect,
+            #oosSelect,
+            select,
             button {
                 display: none !important;
             }
             
-            /* Keep blue IN SERVICE when printing */
+            /* SUPERVISOR DROPDOWNS - Special handling */
+            #deputyChief,
+            #supervisor703,
+            #supervisor704 {
+                display: inline !important;
+                -webkit-appearance: none !important;
+                -moz-appearance: none !important;
+                appearance: none !important;
+                border: none !important;
+                background: none !important;
+                font-weight: bold !important;
+                text-align: center !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* Hide dropdown arrows */
+            select::-ms-expand {
+                display: none !important;
+            }
+            
+            /* Fix district labels */
+            label:contains("703")::before {
+                content: "";
+            }
+            label:contains("703") {
+                font-size: 0 !important;
+            }
+            label:contains("703")::after {
+                content: "703 - SOUTH DISTRICT" !important;
+                font-size: 12pt !important;
+                font-weight: bold !important;
+            }
+            
+            label:contains("704")::before {
+                content: "";
+            }
+            label:contains("704") {
+                font-size: 0 !important;
+            }
+            label:contains("704")::after {
+                content: "704 - NORTH DISTRICT" !important;
+                font-size: 12pt !important;
+                font-weight: bold !important;
+            }
+            
+            /* Center the supervisor text under districts */
+            div:has(#supervisor703),
+            div:has(#supervisor704) {
+                text-align: center !important;
+            }
+            
+            /* Blue IN SERVICE */
+            div[style*="border: 2px solid rgb(0, 123, 255)"],
             div[style*="border: 2px solid #007bff"] {
                 border: 2px solid #007bff !important;
                 background-color: #f0f8ff !important;
             }
             
-            /* Keep red OUT OF SERVICE when printing */
-            div[style*="border: 2px solid #dc3545"] {
+            /* Red OUT OF SERVICE */
+            div[style*="border: 2px solid #dc3545"],
+            div[style*="border: 2px solid rgb(220, 53, 69)"] {
                 border: 2px solid #dc3545 !important;
                 background-color: #fff8f8 !important;
+            }
+            
+            /* No borders on logos */
+            .logo-placeholder,
+            div:has(> img[alt*="ogo"]) {
+                border: none !important;
             }
             
             h1 {
@@ -205,4 +313,4 @@
 })();
 
 window.EMSPatchVersion = '2.3';
-console.log('EMS Report Patch Version: 2.3');
+console.log('EMS Report Patch Version: 2.3 - Complete');

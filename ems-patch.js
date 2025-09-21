@@ -1,22 +1,62 @@
-// EMS Report System Patch v2.5
-// Adds Deputy Chief names with A- prefix
+// EMS Report System Patch v2.6
+// Hides logo button for users (not for developer version)
 // Date: 2025-01-21
 
 (function() {
-    console.log('Applying EMS Report Patch v2.5...');
+    console.log('Applying EMS Report Patch v2.6...');
+    
+    // CHECK IF THIS IS DEVELOPER VERSION
+    // Developer version uses fetch method, production uses script tag
+    const isDeveloper = window.location.href.includes('DEV') || 
+                        document.querySelector('script[src*="nocache"]') ||
+                        console.warn.toString().includes('DEVELOPMENT MODE');
+    
+    if (!isDeveloper) {
+        console.log('Production version detected - hiding logo controls');
+        
+        // Hide the logo button for regular users
+        const hideLogoButton = function() {
+            // Hide the Logos button in top right
+            const logoButtons = document.querySelectorAll('button');
+            logoButtons.forEach(button => {
+                if (button.textContent.includes('Logos') || 
+                    button.textContent.includes('logo') ||
+                    button.onclick && button.onclick.toString().includes('Logo')) {
+                    button.style.display = 'none';
+                    console.log('✓ Logo button hidden');
+                }
+            });
+            
+            // Also hide any unlock buttons related to logos
+            const unlockButtons = document.querySelectorAll('button');
+            unlockButtons.forEach(button => {
+                if (button.textContent.includes('Unlock') && 
+                    button.onclick && button.onclick.toString().includes('logo')) {
+                    button.style.display = 'none';
+                }
+            });
+        };
+        
+        // Apply multiple times to ensure it sticks
+        hideLogoButton();
+        setTimeout(hideLogoButton, 500);
+        setTimeout(hideLogoButton, 1500);
+    } else {
+        console.log('Developer version detected - logo controls remain visible');
+    }
     
     // Update document title
-    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.5');
+    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.6');
     
     // FORCE UPDATE VERSION BUTTON
     const forceUpdateVersion = function() {
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
             if (button.textContent.includes('v2.') || button.textContent.includes('📊')) {
-                button.innerHTML = '📊 v2.5';
+                button.innerHTML = '📊 v2.6';
             }
         });
-        window.EMSPatchVersion = '2.5';
+        window.EMSPatchVersion = '2.6';
     };
     
     // FIX DATE DISPLAY - Add day of week
@@ -106,12 +146,12 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.5</strong> (Deputy Chiefs Added)</p>
+            <p><strong>Version: 2.6</strong> (Logo Controls Hidden)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
             <p>Editors: 7 found</p>
-            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.5 Active</p>
+            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.6 Active</p>
             <button onclick="this.parentElement.remove(); document.querySelector('.backdrop-modal')?.remove();" style="
                 background: white;
                 color: #333;
@@ -365,7 +405,7 @@
                 console.log('✓ Added Deputy Chief names');
             }
             
-            console.log('✅ Patch v2.5 applied successfully');
+            console.log('✅ Patch v2.6 applied successfully');
         } catch (error) {
             console.error('Error:', error);
         }
@@ -381,5 +421,5 @@
     
 })();
 
-window.EMSPatchVersion = '2.5';
-console.log('EMS Report Patch Version: 2.5 - Deputy Chiefs Added');
+window.EMSPatchVersion = '2.6';
+console.log('EMS Report Patch Version: 2.6 - Logo button hidden for users');

@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Fixed: Properly preserves IN SERVICE border
+// Fixed: Restores IN SERVICE border after removing logo borders
 // Date: 2025-01-21
 
 (function() {
@@ -19,41 +19,48 @@
         window.EMSPatchVersion = '2.3';
     };
     
-    // SPECIFICALLY TARGET AND REMOVE ONLY LOGO BORDERS
+    // FIX BORDERS - Remove from logos, then ADD BACK to IN SERVICE
     const fixBorders = function() {
-        // First, ensure IN SERVICE box has its green border
-        const inServiceBoxes = document.querySelectorAll('div');
-        inServiceBoxes.forEach(div => {
-            if (div.textContent.includes('IN SERVICE') && !div.querySelector('img')) {
-                div.parentElement.style.border = '2px solid #28a745';
-            }
-        });
-        
-        // Then remove borders ONLY from actual logo containers
-        const logoPlaceholders = document.querySelectorAll('.logo-placeholder');
-        logoPlaceholders.forEach(element => {
+        // Step 1: Remove borders from logo containers only
+        document.querySelectorAll('.logo-placeholder').forEach(element => {
             element.style.border = '2px solid transparent';
         });
         
-        // Also check for divs that ONLY contain logo images
+        // Step 2: Find and FIX the IN SERVICE box
         const allDivs = document.querySelectorAll('div');
         allDivs.forEach(div => {
-            const hasLogoImage = div.querySelector('img[alt*="Logo" i], img[alt*="logo" i]');
-            const hasServiceText = div.textContent.includes('SERVICE');
+            // Look for the IN SERVICE text
+            const hasInServiceText = div.textContent.includes('IN SERVICE') && 
+                                     !div.textContent.includes('OUT OF SERVICE');
             
-            // Only remove border if it has a logo AND doesn't have SERVICE text
-            if (hasLogoImage && !hasServiceText) {
-                div.style.border = '2px solid transparent';
+            // If this is the IN SERVICE container, restore its border
+            if (hasInServiceText) {
+                const parentDiv = div.closest('div[style*="border"]');
+                if (parentDiv) {
+                    parentDiv.style.border = '2px solid #28a745';
+                    parentDiv.style.backgroundColor = '#f8fff9';
+                }
+            }
+        });
+        
+        // Step 3: Ensure OUT OF SERVICE keeps its red border too
+        allDivs.forEach(div => {
+            if (div.textContent.includes('OUT OF SERVICE')) {
+                const parentDiv = div.closest('div[style*="border"]');
+                if (parentDiv) {
+                    parentDiv.style.border = '2px solid #dc3545';
+                    parentDiv.style.backgroundColor = '#fff8f8';
+                }
             }
         });
     };
     
-    // Apply fixes multiple times
+    // Apply fixes with delays to ensure they stick
     forceUpdateVersion();
     setTimeout(fixBorders, 100);
-    setTimeout(forceUpdateVersion, 200);
     setTimeout(fixBorders, 500);
-    setTimeout(fixBorders, 1500);
+    setTimeout(fixBorders, 1000);
+    setTimeout(fixBorders, 2000); // Extra call to ensure it sticks
     
     // Override checkPatchStatus
     window.checkPatchStatus = function() {
@@ -117,19 +124,9 @@
         return false;
     };
     
-    // Add LESS AGGRESSIVE CSS
+    // Add CSS for print only (not for screen)
     const styles = document.createElement('style');
     styles.innerHTML = `
-        /* Only target elements with class logo-placeholder specifically */
-        .logo-placeholder {
-            border: 2px solid transparent !important;
-        }
-        
-        /* Make sure IN SERVICE box keeps its green border */
-        div[style*="border: 2px solid #28a745"]:has(div:contains("IN SERVICE")) {
-            border: 2px solid #28a745 !important;
-        }
-        
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -145,15 +142,6 @@
             /* No borders on logos when printing */
             .logo-placeholder {
                 border: none !important;
-            }
-            
-            /* Keep service box colors when printing */
-            div[style*="border: 2px solid #28a745"] {
-                border: 2px solid #28a745 !important;
-            }
-            
-            div[style*="border: 2px solid #dc3545"] {
-                border: 2px solid #dc3545 !important;
             }
             
             h1 {

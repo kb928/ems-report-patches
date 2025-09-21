@@ -21,7 +21,7 @@
         'Lalumandier',
         'Free',
         'Powers',
-        'Brickey',  // Corrected from Brisley
+        'Brickey',
         'Hale',
         'Dobelmann'
     ];
@@ -29,12 +29,20 @@
     // Wait for DOM to be ready
     function applyPatch() {
         try {
-            // Find 703 and 704 select elements
-            const selects703 = document.querySelectorAll('select[id*="703"], select[class*="703"]');
-            const selects704 = document.querySelectorAll('select[id*="704"], select[class*="704"]');
+            let patchedCount = 0;
+            
+            // Target the CORRECT element IDs - supervisor703 and supervisor704
+            const supervisor703 = document.getElementById('supervisor703');
+            const supervisor704 = document.getElementById('supervisor704');
             
             // Function to add options to a select element
-            function addOptionsToSelect(selectElement, names) {
+            function addOptionsToSelect(selectElement, names, unitNumber) {
+                if (!selectElement) {
+                    console.error(`❌ Could not find ${unitNumber} dropdown`);
+                    return false;
+                }
+                
+                let addedCount = 0;
                 names.forEach(name => {
                     // Check if option already exists
                     const exists = Array.from(selectElement.options).some(
@@ -45,48 +53,75 @@
                         const option = document.createElement('option');
                         option.value = name;
                         option.text = name;
-                        selectElement.appendChild(option);
+                        
+                        // Insert before the "Add Custom Name" option if it exists
+                        const customOption = Array.from(selectElement.options).find(
+                            opt => opt.value === 'custom' || opt.text.includes('Add Custom')
+                        );
+                        
+                        if (customOption) {
+                            selectElement.insertBefore(option, customOption);
+                        } else {
+                            selectElement.appendChild(option);
+                        }
+                        addedCount++;
                     }
                 });
                 
-                // Sort options alphabetically (keeping first empty option if it exists)
-                const options = Array.from(selectElement.options);
-                const firstOption = options[0]?.value === '' ? options.shift() : null;
+                console.log(`✓ Added ${addedCount} names to ${unitNumber} dropdown`);
+                return true;
+            }
+            
+            // Apply to 703 dropdown
+            if (supervisor703) {
+                if (addOptionsToSelect(supervisor703, newNames, '703')) {
+                    patchedCount++;
+                }
+            } else {
+                console.error('❌ Element with ID "supervisor703" not found');
+            }
+            
+            // Apply to 704 dropdown
+            if (supervisor704) {
+                if (addOptionsToSelect(supervisor704, newNames, '704')) {
+                    patchedCount++;
+                }
+            } else {
+                console.error('❌ Element with ID "supervisor704" not found');
+            }
+            
+            // Also try alternative selectors if the main ones don't work
+            if (patchedCount === 0) {
+                console.log('Trying alternative selectors...');
                 
-                options.sort((a, b) => a.text.localeCompare(b.text));
-                
-                selectElement.innerHTML = '';
-                if (firstOption) selectElement.appendChild(firstOption);
-                options.forEach(option => selectElement.appendChild(option));
+                // Try finding by class or other attributes
+                const allSelects = document.querySelectorAll('select');
+                allSelects.forEach(select => {
+                    // Check if this might be a 703 or 704 dropdown
+                    if (select.id.includes('703') || 
+                        select.className.includes('703') || 
+                        select.name?.includes('703')) {
+                        addOptionsToSelect(select, newNames, '703 (alternative)');
+                        patchedCount++;
+                    }
+                    if (select.id.includes('704') || 
+                        select.className.includes('704') || 
+                        select.name?.includes('704')) {
+                        addOptionsToSelect(select, newNames, '704 (alternative)');
+                        patchedCount++;
+                    }
+                });
             }
             
-            // Apply to 703 dropdowns
-            selects703.forEach(select => {
-                addOptionsToSelect(select, newNames);
-                console.log('✓ Updated 703 dropdown:', select.id || select.className);
-            });
-            
-            // Apply to 704 dropdowns
-            selects704.forEach(select => {
-                addOptionsToSelect(select, newNames);
-                console.log('✓ Updated 704 dropdown:', select.id || select.className);
-            });
-            
-            // If specific IDs are known, target them directly
-            const unit703 = document.getElementById('unit703');
-            const unit704 = document.getElementById('unit704');
-            
-            if (unit703) {
-                addOptionsToSelect(unit703, newNames);
-                console.log('✓ Updated unit 703 dropdown directly');
+            if (patchedCount > 0) {
+                console.log(`✅ EMS Report Patch v2.2 applied successfully to ${patchedCount} dropdowns`);
+            } else {
+                console.error('❌ No dropdowns were patched. Check element IDs in HTML.');
+                console.log('Available select elements:', document.querySelectorAll('select').length);
+                document.querySelectorAll('select').forEach(s => {
+                    console.log('  - Select found:', s.id || s.className || 'no id/class');
+                });
             }
-            
-            if (unit704) {
-                addOptionsToSelect(unit704, newNames);
-                console.log('✓ Updated unit 704 dropdown directly');
-            }
-            
-            console.log('✅ EMS Report Patch v2.2 applied successfully');
             
         } catch (error) {
             console.error('❌ Error applying patch:', error);
@@ -106,6 +141,6 @@
     
 })();
 
-// Version check and auto-update notification
+// Version check
 window.EMSPatchVersion = '2.2';
 console.log('EMS Report Patch Version:', window.EMSPatchVersion);

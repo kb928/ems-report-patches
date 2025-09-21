@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Fixed: Restores IN SERVICE border after removing logo borders
+// Fixed: Only targets logo borders by specific ID/class
 // Date: 2025-01-21
 
 (function() {
@@ -19,48 +19,41 @@
         window.EMSPatchVersion = '2.3';
     };
     
-    // FIX BORDERS - Remove from logos, then ADD BACK to IN SERVICE
-    const fixBorders = function() {
-        // Step 1: Remove borders from logo containers only
-        document.querySelectorAll('.logo-placeholder').forEach(element => {
-            element.style.border = '2px solid transparent';
-        });
+    // ONLY remove borders from elements with ID logoLeft and logoRight
+    const fixLogoBordersOnly = function() {
+        // Target ONLY the specific logo containers by ID
+        const logoLeft = document.getElementById('logoLeft');
+        const logoRight = document.getElementById('logoRight');
         
-        // Step 2: Find and FIX the IN SERVICE box
-        const allDivs = document.querySelectorAll('div');
-        allDivs.forEach(div => {
-            // Look for the IN SERVICE text
-            const hasInServiceText = div.textContent.includes('IN SERVICE') && 
-                                     !div.textContent.includes('OUT OF SERVICE');
-            
-            // If this is the IN SERVICE container, restore its border
-            if (hasInServiceText) {
-                const parentDiv = div.closest('div[style*="border"]');
-                if (parentDiv) {
-                    parentDiv.style.border = '2px solid #28a745';
-                    parentDiv.style.backgroundColor = '#f8fff9';
-                }
-            }
-        });
+        if (logoLeft) {
+            logoLeft.style.border = 'none';
+        }
+        if (logoRight) {
+            logoRight.style.border = 'none';
+        }
         
-        // Step 3: Ensure OUT OF SERVICE keeps its red border too
-        allDivs.forEach(div => {
-            if (div.textContent.includes('OUT OF SERVICE')) {
-                const parentDiv = div.closest('div[style*="border"]');
-                if (parentDiv) {
-                    parentDiv.style.border = '2px solid #dc3545';
-                    parentDiv.style.backgroundColor = '#fff8f8';
-                }
+        // Also target their parent containers if they have borders
+        if (logoLeft && logoLeft.parentElement) {
+            const parent = logoLeft.parentElement;
+            if (parent.querySelector('img') && !parent.textContent.includes('SERVICE')) {
+                parent.style.border = 'none';
             }
-        });
+        }
+        if (logoRight && logoRight.parentElement) {
+            const parent = logoRight.parentElement;
+            if (parent.querySelector('img') && !parent.textContent.includes('SERVICE')) {
+                parent.style.border = 'none';
+            }
+        }
+        
+        console.log('✓ Logo borders removed (IDs: logoLeft, logoRight)');
     };
     
-    // Apply fixes with delays to ensure they stick
+    // Apply fixes
     forceUpdateVersion();
-    setTimeout(fixBorders, 100);
-    setTimeout(fixBorders, 500);
-    setTimeout(fixBorders, 1000);
-    setTimeout(fixBorders, 2000); // Extra call to ensure it sticks
+    setTimeout(fixLogoBordersOnly, 100);
+    setTimeout(forceUpdateVersion, 200);
+    setTimeout(fixLogoBordersOnly, 500);
     
     // Override checkPatchStatus
     window.checkPatchStatus = function() {
@@ -124,9 +117,14 @@
         return false;
     };
     
-    // Add CSS for print only (not for screen)
+    // CSS for print only
     const styles = document.createElement('style');
     styles.innerHTML = `
+        /* Only target specific logo IDs */
+        #logoLeft, #logoRight {
+            border: none !important;
+        }
+        
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -140,7 +138,7 @@
             }
             
             /* No borders on logos when printing */
-            .logo-placeholder {
+            #logoLeft, #logoRight, .logo-placeholder {
                 border: none !important;
             }
             

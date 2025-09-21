@@ -1,66 +1,111 @@
-// EMS Report System Patch v2.1
-// Auto-updates on every page load
-// Last updated: 2025-01-20
-
-console.log('[EMS Patch] Loading version 2.1...');
+// EMS Report System Patch v2.2
+// Adds new personnel names to 703 and 704 dropdowns
+// Author: [Your Name]
+// Date: 2025-01-21
 
 (function() {
+    console.log('Applying EMS Report Patch v2.2...');
+    
+    // New names to add
+    const newNames = [
+        'Krause',
+        'Morrison',
+        'Klaves',
+        'Phifer',
+        'Beckenholdt',
+        'Simms',
+        'Carbrey',
+        'Fournier',
+        'Lammert',
+        'Fendelman',
+        'Lalumandier',
+        'Free',
+        'Powers',
+        'Brickey',  // Corrected from Brisley
+        'Hale',
+        'Dobelmann'
+    ];
+    
+    // Wait for DOM to be ready
     function applyPatch() {
-        console.log('[EMS Patch] Applying fixes...');
-        
-        // Fix 1: In-Service unit dropdown
-        const inServiceSelect = document.getElementById("inServiceSelect");
-        if (inServiceSelect) {
-            inServiceSelect.removeAttribute("onchange");
-            inServiceSelect.addEventListener("change", function() {
-                if (this.value) {
-                    addInServiceUnit(this.value);
-                    this.value = "";
-                }
-            });
-            console.log('[EMS Patch] ✓ In-Service dropdown fixed');
-        }
-        
-        // Fix 2: OOS unit dropdown
-        const oosSelect = document.getElementById("oosSelect");
-        if (oosSelect) {
-            oosSelect.removeAttribute("onchange");
-            oosSelect.addEventListener("change", function() {
-                if (this.value) {
-                    addOOSUnit(this.value);
-                    this.value = "";
-                }
-            });
-            console.log('[EMS Patch] ✓ OOS dropdown fixed');
-        }
-        
-        // Fix 3: Update version indicator - CORRECTED SELECTOR
-        const versionButtons = document.querySelectorAll('.lock-button');
-        versionButtons.forEach(btn => {
-            if (btn.textContent.includes('v2.0') || btn.textContent.includes('📊')) {
-                btn.textContent = '📊 v2.1 ✓';
-                btn.style.background = '#28a745';
-                console.log('[EMS Patch] ✓ Version updated to 2.1');
+        try {
+            // Find 703 and 704 select elements
+            const selects703 = document.querySelectorAll('select[id*="703"], select[class*="703"]');
+            const selects704 = document.querySelectorAll('select[id*="704"], select[class*="704"]');
+            
+            // Function to add options to a select element
+            function addOptionsToSelect(selectElement, names) {
+                names.forEach(name => {
+                    // Check if option already exists
+                    const exists = Array.from(selectElement.options).some(
+                        option => option.value === name || option.text === name
+                    );
+                    
+                    if (!exists) {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.text = name;
+                        selectElement.appendChild(option);
+                    }
+                });
+                
+                // Sort options alphabetically (keeping first empty option if it exists)
+                const options = Array.from(selectElement.options);
+                const firstOption = options[0]?.value === '' ? options.shift() : null;
+                
+                options.sort((a, b) => a.text.localeCompare(b.text));
+                
+                selectElement.innerHTML = '';
+                if (firstOption) selectElement.appendChild(firstOption);
+                options.forEach(option => selectElement.appendChild(option));
             }
-        });
-        
-        // Fix 4: Auto-enable embedded logos
-        const leftImage = document.getElementById('leftImage');
-        const rightImage = document.getElementById('rightImage');
-        if (leftImage && rightImage) {
-            leftImage.classList.add('has-embedded-logo');
-            rightImage.classList.add('has-embedded-logo');
-            localStorage.setItem('use_embedded_logos', 'true');
-            console.log('[EMS Patch] ✓ Logos enabled');
+            
+            // Apply to 703 dropdowns
+            selects703.forEach(select => {
+                addOptionsToSelect(select, newNames);
+                console.log('✓ Updated 703 dropdown:', select.id || select.className);
+            });
+            
+            // Apply to 704 dropdowns
+            selects704.forEach(select => {
+                addOptionsToSelect(select, newNames);
+                console.log('✓ Updated 704 dropdown:', select.id || select.className);
+            });
+            
+            // If specific IDs are known, target them directly
+            const unit703 = document.getElementById('unit703');
+            const unit704 = document.getElementById('unit704');
+            
+            if (unit703) {
+                addOptionsToSelect(unit703, newNames);
+                console.log('✓ Updated unit 703 dropdown directly');
+            }
+            
+            if (unit704) {
+                addOptionsToSelect(unit704, newNames);
+                console.log('✓ Updated unit 704 dropdown directly');
+            }
+            
+            console.log('✅ EMS Report Patch v2.2 applied successfully');
+            
+        } catch (error) {
+            console.error('❌ Error applying patch:', error);
         }
-        
-        console.log('[EMS Patch] ✅ All patches applied');
     }
     
-    // Wait for DOM if needed
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", applyPatch);
+    // Apply patch when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyPatch);
     } else {
-        setTimeout(applyPatch, 100);
+        // DOM already loaded
+        setTimeout(applyPatch, 100); // Small delay to ensure elements are rendered
     }
+    
+    // Also try to apply patch after a delay in case of dynamic content
+    setTimeout(applyPatch, 1000);
+    
 })();
+
+// Version check and auto-update notification
+window.EMSPatchVersion = '2.2';
+console.log('EMS Report Patch Version:', window.EMSPatchVersion);

@@ -1,22 +1,22 @@
-// EMS Report System Patch v2.4
-// Adds intelligent page breaks for clean printing
+// EMS Report System Patch v2.5
+// Adds Deputy Chief names with A- prefix
 // Date: 2025-01-21
 
 (function() {
-    console.log('Applying EMS Report Patch v2.4...');
+    console.log('Applying EMS Report Patch v2.5...');
     
     // Update document title
-    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.4');
+    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.5');
     
     // FORCE UPDATE VERSION BUTTON
     const forceUpdateVersion = function() {
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
             if (button.textContent.includes('v2.') || button.textContent.includes('📊')) {
-                button.innerHTML = '📊 v2.4';
+                button.innerHTML = '📊 v2.5';
             }
         });
-        window.EMSPatchVersion = '2.4';
+        window.EMSPatchVersion = '2.5';
     };
     
     // FIX DATE DISPLAY - Add day of week
@@ -106,12 +106,12 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.4</strong> (Print Optimized)</p>
+            <p><strong>Version: 2.5</strong> (Deputy Chiefs Added)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
             <p>Editors: 7 found</p>
-            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.4 Active</p>
+            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.5 Active</p>
             <button onclick="this.parentElement.remove(); document.querySelector('.backdrop-modal')?.remove();" style="
                 background: white;
                 color: #333;
@@ -317,16 +317,24 @@
     `;
     document.head.appendChild(styles);
     
-    // Names for dropdowns
-    const newNames = [
+    // Names for 703/704 dropdowns
+    const supervisorNames = [
         'Krause', 'Morrison', 'Klaves', 'Phifer', 'Beckenholdt',
         'Simms', 'Carbrey', 'Fournier', 'Lammert', 'Fendelman',
         'Lalumandier', 'Free', 'Powers', 'Brickey', 'Hale', 'Dobelmann'
     ];
     
+    // Deputy Chief names with A- prefix
+    const deputyChiefNames = [
+        'A-Krause',
+        'A-Beckenholdt',
+        'A-Fournier'
+    ];
+    
     // Add names to dropdowns
     function applyPatch() {
         try {
+            // Add to supervisor dropdowns
             const supervisor703 = document.getElementById('supervisor703');
             const supervisor704 = document.getElementById('supervisor704');
             
@@ -347,10 +355,17 @@
                 });
             }
             
-            if (supervisor703) addOptionsToSelect(supervisor703, newNames);
-            if (supervisor704) addOptionsToSelect(supervisor704, newNames);
+            if (supervisor703) addOptionsToSelect(supervisor703, supervisorNames);
+            if (supervisor704) addOptionsToSelect(supervisor704, supervisorNames);
             
-            console.log('✅ Patch v2.4 applied successfully');
+            // Add to Deputy Chief dropdown
+            const deputyChief = document.getElementById('deputyChief');
+            if (deputyChief) {
+                addOptionsToSelect(deputyChief, deputyChiefNames);
+                console.log('✓ Added Deputy Chief names');
+            }
+            
+            console.log('✅ Patch v2.5 applied successfully');
         } catch (error) {
             console.error('Error:', error);
         }
@@ -366,5 +381,5 @@
     
 })();
 
-window.EMSPatchVersion = '2.4';
-console.log('EMS Report Patch Version: 2.4 - Print Optimized');
+window.EMSPatchVersion = '2.5';
+console.log('EMS Report Patch Version: 2.5 - Deputy Chiefs Added');

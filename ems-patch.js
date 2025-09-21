@@ -17,10 +17,9 @@
         console.log('✓ Version button updated to v2.2');
     }
     
-    // Override the checkPatchStatus function to show v2.2
+    // Override the checkPatchStatus function
     const originalCheckPatchStatus = window.checkPatchStatus;
     window.checkPatchStatus = function() {
-        // Create custom popup with v2.2 info
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -58,7 +57,6 @@
         
         document.body.appendChild(modal);
         
-        // Also add backdrop
         const backdrop = document.createElement('div');
         backdrop.style.cssText = `
             position: fixed;
@@ -101,11 +99,9 @@
         try {
             let patchedCount = 0;
             
-            // Target the CORRECT element IDs - supervisor703 and supervisor704
             const supervisor703 = document.getElementById('supervisor703');
             const supervisor704 = document.getElementById('supervisor704');
             
-            // Function to add options to a select element
             function addOptionsToSelect(selectElement, names, unitNumber) {
                 if (!selectElement) {
                     console.error(`❌ Could not find ${unitNumber} dropdown`);
@@ -114,7 +110,6 @@
                 
                 let addedCount = 0;
                 names.forEach(name => {
-                    // Check if option already exists
                     const exists = Array.from(selectElement.options).some(
                         option => option.value === name || option.text === name
                     );
@@ -124,7 +119,6 @@
                         option.value = name;
                         option.text = name;
                         
-                        // Insert before the "Add Custom Name" option if it exists
                         const customOption = Array.from(selectElement.options).find(
                             opt => opt.value === 'custom' || opt.text.includes('Add Custom')
                         );
@@ -140,46 +134,3 @@
                 
                 if (addedCount > 0) {
                     console.log(`✓ Added ${addedCount} names to ${unitNumber} dropdown`);
-                }
-                return true;
-            }
-            
-            // Apply to 703 dropdown
-            if (supervisor703) {
-                if (addOptionsToSelect(supervisor703, newNames, '703')) {
-                    patchedCount++;
-                }
-            }
-            
-            // Apply to 704 dropdown
-            if (supervisor704) {
-                if (addOptionsToSelect(supervisor704, newNames, '704')) {
-                    patchedCount++;
-                }
-            }
-            
-            if (patchedCount > 0) {
-                console.log(`✅ EMS Report Patch v2.2 applied successfully to ${patchedCount} dropdowns`);
-            }
-            
-        } catch (error) {
-            console.error('❌ Error applying patch:', error);
-        }
-    }
-    
-    // Apply patch when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyPatch);
-    } else {
-        // DOM already loaded
-        setTimeout(applyPatch, 100);
-    }
-    
-    // Also try to apply patch after a delay in case of dynamic content
-    setTimeout(applyPatch, 1000);
-    
-})();
-
-// Version check
-window.EMSPatchVersion = '2.2';
-console.log('EMS Report Patch Version:', window.EMSPatchVersion);

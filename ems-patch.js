@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Removes logo locks completely, fixes print styling
+// Removes logo borders, hides print elements, updates version display
 // Date: 2025-01-21
 
 (function() {
@@ -9,44 +9,56 @@
     document.title = document.title.replace(/v\d+\.\d+/g, 'v2.3');
     console.log('✓ Document title updated to v2.3');
     
-    // UPDATE THE VERSION BUTTON
-    const versionButton = document.querySelector('button.lock-button[onclick="checkPatchStatus()"]');
-    if (versionButton) {
-        versionButton.innerHTML = versionButton.innerHTML.replace(/v\d+\.\d+/g, 'v2.3');
-        console.log('✓ Version button updated to v2.3');
-    }
+    // UPDATE THE VERSION BUTTON - FIX IT TO SHOW v2.3
+    setTimeout(() => {
+        const versionButton = document.querySelector('button.lock-button[onclick="checkPatchStatus()"]');
+        if (versionButton) {
+            versionButton.innerHTML = '📊 v2.3';
+            console.log('✓ Version button updated to v2.3');
+        }
+    }, 100);
     
-    // REMOVE LOCK EMOJIS FROM LOGOS COMPLETELY (not just for printing)
-    const removeLockEmojis = function() {
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(element => {
-            // Only remove locks near logos, not from other places
-            if (element.className && (element.className.includes('logo') || 
-                element.className.includes('header') || 
-                element.id === 'logoLeft' || 
-                element.id === 'logoRight')) {
-                if (element.innerHTML && element.innerHTML.includes('🔒')) {
-                    element.innerHTML = element.innerHTML.replace(/🔒/g, '');
-                }
-            }
-            // Also check parent elements of images
-            const images = element.querySelectorAll('img[alt*="Logo"], img[alt*="logo"], img.logo');
-            if (images.length > 0 && element.innerHTML && element.innerHTML.includes('🔒')) {
-                element.innerHTML = element.innerHTML.replace(/🔒/g, '');
+    // REMOVE GREEN BORDERS FROM LOGOS
+    const removeLogoBorders = function() {
+        // Find logo containers and remove their borders
+        const logoContainers = document.querySelectorAll('.logo-placeholder, .logo-container, [class*="logo"]');
+        logoContainers.forEach(container => {
+            if (container.style) {
+                container.style.border = 'none';
+                container.style.outline = 'none';
+                container.style.boxShadow = 'none';
             }
         });
-        console.log('✓ Lock emojis removed from logos');
+        
+        // Also target elements with green borders specifically
+        const greenBorderedElements = document.querySelectorAll('[style*="border: 2px solid #28a745"], [style*="border: 2px solid rgb(40, 167, 69)"]');
+        greenBorderedElements.forEach(element => {
+            // Check if this element contains a logo
+            if (element.querySelector('img[alt*="Logo"], img[alt*="logo"], img.logo') || 
+                element.className.includes('logo')) {
+                element.style.border = '2px solid white';
+            }
+        });
+        console.log('✓ Logo borders removed/made white');
     };
     
-    // Remove locks when page loads
-    removeLockEmojis();
-    // Remove locks again after a delay in case they're added dynamically
-    setTimeout(removeLockEmojis, 500);
-    setTimeout(removeLockEmojis, 1500);
+    // Remove borders on load and after delays
+    removeLogoBorders();
+    setTimeout(removeLogoBorders, 500);
+    setTimeout(removeLogoBorders, 1500);
     
-    // Add print styles to preserve colors and remove logo borders when printing
-    const printStyles = document.createElement('style');
-    printStyles.innerHTML = `
+    // Add styles for both screen and print
+    const styles = document.createElement('style');
+    styles.innerHTML = `
+        /* Remove logo borders on screen */
+        .logo-placeholder,
+        .logo-container,
+        [class*="logo"] {
+            border: 2px solid white !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
         @media print {
             /* Force color printing */
             * {
@@ -55,114 +67,79 @@
                 color-adjust: exact !important;
             }
             
-            /* REMOVE COLORED BORDERS AROUND LOGOS WHEN PRINTING */
-            .logo-placeholder,
-            .logo-container,
-            .logo-wrapper,
-            [class*="logo"] {
-                border: none !important;
-                outline: none !important;
-                box-shadow: none !important;
-            }
-            
-            /* Remove borders from logo images specifically */
-            .logo-placeholder img,
-            .logo-container img,
-            img.logo,
-            img[alt*="Logo"],
-            img[alt*="logo"] {
-                border: none !important;
-                outline: none !important;
-                box-shadow: none !important;
-            }
-            
-            /* Hide lock buttons and version button */
-            .lock-button,
-            button[onclick*="lock"],
-            button[onclick*="Lock"],
-            button[onclick="checkPatchStatus()"] {
+            /* HIDE ALL UNIT SELECTION UI ELEMENTS WHEN PRINTING */
+            select[id*="inService"],
+            select[id*="oosSelect"],
+            button:contains("Add Unit"),
+            button:contains("Remove Unit"),
+            .add-unit-btn,
+            .remove-unit-btn,
+            button[onclick*="addUnit"],
+            button[onclick*="removeUnit"],
+            label:contains("Add In Service Unit"),
+            label:contains("Add Out of Service Unit"),
+            option[value=""]:first-child,
+            select option:first-child:empty,
+            select[id*="inService"] + button,
+            select[id*="oosSelect"] + button {
                 display: none !important;
             }
             
-            /* Keep header colors */
-            h1, .header-title {
-                color: #dc3545 !important;
-                font-size: 24px !important;
+            /* Hide the "Add In Service Unit" and "Add Out of Service Unit" text */
+            select[id*="Service"] {
+                display: none !important;
             }
             
-            /* Keep the red header text */
-            [style*="color: #dc3545"],
-            [style*="color:#dc3545"],
-            [style*="color: rgb(220, 53, 69)"] {
-                color: #dc3545 !important;
-            }
-            
-            /* Keep green IN SERVICE box (but not for logos) */
-            [style*="border: 2px solid #28a745"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
-            [style*="border: 2px solid rgb(40, 167, 69)"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
-            .in-service-box {
-                border: 2px solid #28a745 !important;
-                background-color: #f8fff9 !important;
-            }
-            
-            /* Keep red OUT OF SERVICE box (but not for logos) */
-            [style*="border: 2px solid #dc3545"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
-            [style*="border: 2px solid rgb(220, 53, 69)"]:not(.logo-placeholder):not(.logo-container):not([class*="logo"]),
-            .oos-box {
-                border: 2px solid #dc3545 !important;
-                background-color: #fff8f8 !important;
-            }
-            
-            /* Green text for IN SERVICE */
-            [style*="color: #28a745"],
-            [style*="color:#28a745"],
-            [style*="color: rgb(40, 167, 69)"] {
-                color: #28a745 !important;
-                font-weight: bold !important;
-            }
-            
-            /* Red text for OUT OF SERVICE */
-            [style*="color: #dc3545"],
-            [style*="color:#dc3545"] {
-                color: #dc3545 !important;
-                font-weight: bold !important;
-            }
-            
-            /* Keep section backgrounds */
-            .quote-section {
-                background-color: #f8f9fa !important;
-            }
-            
-            /* Hide all edit buttons */
+            /* Hide add/remove buttons */
             button:not(.print-button) {
                 display: none !important;
             }
             
-            /* Clean up dropdowns for printing */
-            select {
+            /* Hide lock buttons and version button */
+            .lock-button,
+            button[onclick="checkPatchStatus()"] {
+                display: none !important;
+            }
+            
+            /* Remove borders from logos */
+            .logo-placeholder,
+            .logo-container,
+            img[alt*="Logo"],
+            img[alt*="logo"] {
+                border: none !important;
+                outline: none !important;
+            }
+            
+            /* Keep header colors */
+            h1 {
+                color: #dc3545 !important;
+            }
+            
+            /* Keep green IN SERVICE box (but not for logos) */
+            .in-service-box,
+            div:has(> h3:contains("IN SERVICE")) {
+                border: 2px solid #28a745 !important;
+                background-color: #f8fff9 !important;
+            }
+            
+            /* Keep red OUT OF SERVICE box */
+            .oos-box,
+            div:has(> h3:contains("OUT OF SERVICE")) {
+                border: 2px solid #dc3545 !important;
+                background-color: #fff8f8 !important;
+            }
+            
+            /* Clean up dropdowns for 703/704 */
+            #supervisor703,
+            #supervisor704 {
                 border: 1px solid #ccc !important;
-                padding: 4px !important;
                 background: white !important;
             }
             
-            /* Make sure logos print cleanly */
-            .logo-placeholder img,
-            img.logo {
-                display: block !important;
-                max-width: 100px !important;
-                border: none !important;
-            }
-            
             /* Deputy Chief section styling */
-            [style*="border: 3px solid #dc3545"]:not(.logo-placeholder):not(.logo-container) {
+            div:has(> label:contains("DEPUTY CHIEF")) {
                 border: 3px solid #dc3545 !important;
                 background-color: #fff5f5 !important;
-            }
-            
-            /* Keep gray section headers */
-            [style*="background: #e9ecef"],
-            [style*="background-color: #e9ecef"] {
-                background-color: #e9ecef !important;
             }
             
             /* Force page to use color mode */
@@ -171,8 +148,8 @@
             }
         }
     `;
-    document.head.appendChild(printStyles);
-    console.log('✓ Print styles added');
+    document.head.appendChild(styles);
+    console.log('✓ Styles added for screen and print');
     
     // Override checkPatchStatus for v2.3
     window.checkPatchStatus = function() {
@@ -193,7 +170,7 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.3</strong> (Logo Locks Removed)</p>
+            <p><strong>Version: 2.3</strong> (All Issues Fixed)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>

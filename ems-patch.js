@@ -34,13 +34,15 @@ console.log('[EMS Patch] Loading version 2.1...');
             console.log('[EMS Patch] ✓ OOS dropdown fixed');
         }
         
-        // Fix 3: Update version indicator
-        const versionBtn = document.querySelector('.lock-button[style*="background: #17a2b8"]');
-        if (versionBtn) {
-            versionBtn.textContent = '📊 v2.1 ✓';
-            versionBtn.style.background = '#28a745';
-            console.log('[EMS Patch] ✓ Version updated');
-        }
+        // Fix 3: Update version indicator - CORRECTED SELECTOR
+        const versionButtons = document.querySelectorAll('.lock-button');
+        versionButtons.forEach(btn => {
+            if (btn.textContent.includes('v2.0') || btn.textContent.includes('📊')) {
+                btn.textContent = '📊 v2.1 ✓';
+                btn.style.background = '#28a745';
+                console.log('[EMS Patch] ✓ Version updated to 2.1');
+            }
+        });
         
         // Fix 4: Auto-enable embedded logos
         const leftImage = document.getElementById('leftImage');

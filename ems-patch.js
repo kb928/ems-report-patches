@@ -34,19 +34,31 @@ console.log('[EMS Patch] Loading version 2.1...');
             console.log('[EMS Patch] ✓ OOS dropdown fixed');
         }
         
-        // Add version indicator to page
-        const versionBtn = document.querySelector('.lock-button[onclick="checkPatchStatus()"]');
+        // Fix 3: Update version indicator
+        const versionBtn = document.querySelector('.lock-button[style*="background: #17a2b8"]');
         if (versionBtn) {
-            versionBtn.textContent = '📊 v2.1 (Patched)';
+            versionBtn.textContent = '📊 v2.1 ✓';
+            versionBtn.style.background = '#28a745';
+            console.log('[EMS Patch] ✓ Version updated');
         }
         
-        console.log('[EMS Patch] ✅ All patches applied successfully');
+        // Fix 4: Auto-enable embedded logos
+        const leftImage = document.getElementById('leftImage');
+        const rightImage = document.getElementById('rightImage');
+        if (leftImage && rightImage) {
+            leftImage.classList.add('has-embedded-logo');
+            rightImage.classList.add('has-embedded-logo');
+            localStorage.setItem('use_embedded_logos', 'true');
+            console.log('[EMS Patch] ✓ Logos enabled');
+        }
+        
+        console.log('[EMS Patch] ✅ All patches applied');
     }
     
     // Wait for DOM if needed
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", applyPatch);
     } else {
-        setTimeout(applyPatch, 100); // Small delay to ensure everything is loaded
+        setTimeout(applyPatch, 100);
     }
 })();

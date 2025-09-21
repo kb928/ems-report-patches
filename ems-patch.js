@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.3
-// Fixed: Only targets logo borders by specific ID/class
+// Changes IN SERVICE to blue, removes logo borders, fixes all issues
 // Date: 2025-01-21
 
 (function() {
@@ -19,41 +19,39 @@
         window.EMSPatchVersion = '2.3';
     };
     
-    // ONLY remove borders from elements with ID logoLeft and logoRight
-    const fixLogoBordersOnly = function() {
-        // Target ONLY the specific logo containers by ID
-        const logoLeft = document.getElementById('logoLeft');
-        const logoRight = document.getElementById('logoRight');
-        
-        if (logoLeft) {
-            logoLeft.style.border = 'none';
-        }
-        if (logoRight) {
-            logoRight.style.border = 'none';
-        }
-        
-        // Also target their parent containers if they have borders
-        if (logoLeft && logoLeft.parentElement) {
-            const parent = logoLeft.parentElement;
-            if (parent.querySelector('img') && !parent.textContent.includes('SERVICE')) {
-                parent.style.border = 'none';
+    // CHANGE IN SERVICE TO BLUE AND REMOVE LOGO BORDERS
+    const fixAllBorders = function() {
+        const allDivs = document.querySelectorAll('div');
+        allDivs.forEach(div => {
+            // Check if this has a green border
+            if (div.style.border && div.style.border.includes('rgb(40, 167, 69)') || 
+                div.style.border && div.style.border.includes('#28a745')) {
+                
+                // If it contains "IN SERVICE", make it blue
+                if (div.textContent.includes('IN SERVICE') && !div.textContent.includes('OUT OF')) {
+                    div.style.border = '2px solid #007bff';
+                    div.style.backgroundColor = '#f0f8ff';
+                } else if (div.querySelector('img')) {
+                    // If it contains a logo image, remove the border
+                    div.style.border = 'none';
+                }
             }
-        }
-        if (logoRight && logoRight.parentElement) {
-            const parent = logoRight.parentElement;
-            if (parent.querySelector('img') && !parent.textContent.includes('SERVICE')) {
-                parent.style.border = 'none';
-            }
-        }
+        });
         
-        console.log('✓ Logo borders removed (IDs: logoLeft, logoRight)');
+        // Also update the IN SERVICE header text to blue
+        const headers = document.querySelectorAll('h3, h4, div');
+        headers.forEach(header => {
+            if (header.textContent === 'IN SERVICE') {
+                header.style.color = '#007bff';
+            }
+        });
     };
     
-    // Apply fixes
+    // Apply fixes multiple times
     forceUpdateVersion();
-    setTimeout(fixLogoBordersOnly, 100);
-    setTimeout(forceUpdateVersion, 200);
-    setTimeout(fixLogoBordersOnly, 500);
+    setTimeout(fixAllBorders, 100);
+    setTimeout(fixAllBorders, 500);
+    setTimeout(fixAllBorders, 1000);
     
     // Override checkPatchStatus
     window.checkPatchStatus = function() {
@@ -77,7 +75,7 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.3</strong> (Fully Patched)</p>
+            <p><strong>Version: 2.3</strong> (Blue IN SERVICE)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
@@ -117,12 +115,13 @@
         return false;
     };
     
-    // CSS for print only
+    // CSS for consistent blue IN SERVICE
     const styles = document.createElement('style');
     styles.innerHTML = `
-        /* Only target specific logo IDs */
-        #logoLeft, #logoRight {
-            border: none !important;
+        /* Change IN SERVICE text to blue */
+        h3:contains("IN SERVICE"),
+        div:contains("IN SERVICE"):not(:contains("OUT OF")) {
+            color: #007bff !important;
         }
         
         @media print {
@@ -137,9 +136,16 @@
                 display: none !important;
             }
             
-            /* No borders on logos when printing */
-            #logoLeft, #logoRight, .logo-placeholder {
-                border: none !important;
+            /* Keep blue IN SERVICE when printing */
+            div[style*="border: 2px solid #007bff"] {
+                border: 2px solid #007bff !important;
+                background-color: #f0f8ff !important;
+            }
+            
+            /* Keep red OUT OF SERVICE when printing */
+            div[style*="border: 2px solid #dc3545"] {
+                border: 2px solid #dc3545 !important;
+                background-color: #fff8f8 !important;
             }
             
             h1 {

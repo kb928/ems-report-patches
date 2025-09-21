@@ -1,22 +1,22 @@
-// EMS Report System Patch v2.3
-// Complete print optimization with date display fix
+// EMS Report System Patch v2.4
+// Adds intelligent page breaks for clean printing
 // Date: 2025-01-21
 
 (function() {
-    console.log('Applying EMS Report Patch v2.3...');
+    console.log('Applying EMS Report Patch v2.4...');
     
     // Update document title
-    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.3');
+    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.4');
     
     // FORCE UPDATE VERSION BUTTON
     const forceUpdateVersion = function() {
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
             if (button.textContent.includes('v2.') || button.textContent.includes('📊')) {
-                button.innerHTML = '📊 v2.3';
+                button.innerHTML = '📊 v2.4';
             }
         });
-        window.EMSPatchVersion = '2.3';
+        window.EMSPatchVersion = '2.4';
     };
     
     // FIX DATE DISPLAY - Add day of week
@@ -27,7 +27,6 @@
             const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
             const formattedDate = date.toLocaleDateString('en-US', options);
             
-            // Create a span to show formatted date for print
             if (!document.getElementById('printDate')) {
                 const printDate = document.createElement('span');
                 printDate.id = 'printDate';
@@ -107,12 +106,12 @@
         
         modal.innerHTML = `
             <h3 style="margin-top: 0;">This page says</h3>
-            <p><strong>Version: 2.3</strong> (Fully Optimized)</p>
+            <p><strong>Version: 2.4</strong> (Print Optimized)</p>
             <p>Status: All systems operational</p>
             <p>Last Updated: ${new Date().toLocaleDateString()}</p>
             <p>LocalStorage: Available</p>
             <p>Editors: 7 found</p>
-            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.3 Active</p>
+            <p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.4 Active</p>
             <button onclick="this.parentElement.remove(); document.querySelector('.backdrop-modal')?.remove();" style="
                 background: white;
                 color: #333;
@@ -147,7 +146,7 @@
         return false;
     };
     
-    // COMPREHENSIVE PRINT STYLES
+    // COMPREHENSIVE PRINT STYLES WITH PAGE BREAK CONTROL
     const styles = document.createElement('style');
     styles.innerHTML = `
         /* Show formatted date for print */
@@ -161,6 +160,61 @@
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+            }
+            
+            /* PAGE BREAK CONTROL - Keep sections together */
+            @page {
+                size: letter;
+                margin: 0.5in;
+            }
+            
+            /* Prevent breaks inside sections */
+            .quote-section,
+            .units-section,
+            .supervisors-section,
+            .tasks-section,
+            .announcements-section,
+            div[style*="border"],
+            .editor-content {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            
+            /* Force breaks before major sections if needed */
+            h2, h3 {
+                page-break-after: avoid !important;
+            }
+            
+            /* Keep IN SERVICE and OUT OF SERVICE boxes together */
+            div:has(> h3:contains("IN SERVICE")),
+            div:has(> h3:contains("OUT OF SERVICE")) {
+                page-break-inside: avoid !important;
+                display: inline-block !important;
+                width: 48% !important;
+                vertical-align: top !important;
+            }
+            
+            /* Abbott and Medic One sections stay together */
+            div:has(> h3:contains("ABBOTT")),
+            div:has(> h3:contains("MEDIC ONE")) {
+                page-break-inside: avoid !important;
+                margin-bottom: 15px !important;
+            }
+            
+            /* Supervisor section stays together */
+            div:has(> h2:contains("SUPERVISORS")) {
+                page-break-inside: avoid !important;
+            }
+            
+            /* Compact spacing for better fit */
+            .editor-content {
+                min-height: auto !important;
+                padding: 10px !important;
+            }
+            
+            /* Reduce margins between sections */
+            div[style*="margin-bottom"] {
+                margin-bottom: 10px !important;
             }
             
             /* HIDE DATE INPUT, SHOW FORMATTED DATE */
@@ -296,7 +350,7 @@
             if (supervisor703) addOptionsToSelect(supervisor703, newNames);
             if (supervisor704) addOptionsToSelect(supervisor704, newNames);
             
-            console.log('✅ Patch v2.3 applied successfully');
+            console.log('✅ Patch v2.4 applied successfully');
         } catch (error) {
             console.error('Error:', error);
         }
@@ -312,5 +366,5 @@
     
 })();
 
-window.EMSPatchVersion = '2.3';
-console.log('EMS Report Patch Version: 2.3 - Complete');
+window.EMSPatchVersion = '2.4';
+console.log('EMS Report Patch Version: 2.4 - Print Optimized');

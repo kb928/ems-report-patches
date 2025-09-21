@@ -6,6 +6,30 @@
 (function() {
     console.log('Applying EMS Report Patch v2.2...');
     
+    // Update version display
+    const versionElement = document.getElementById('version-number');
+    if (versionElement) {
+        versionElement.textContent = 'v2.2';
+        versionElement.style.color = '#4CAF50'; // Keep it green
+        console.log('✓ Version display updated to v2.2');
+    } else {
+        // Try to find version text by class or other selectors
+        const versionTexts = document.querySelectorAll('.version, [class*="version"], span:contains("v2")');
+        versionTexts.forEach(el => {
+            if (el.textContent.includes('v2.0') || el.textContent.includes('v2.1')) {
+                el.textContent = el.textContent.replace(/v2\.\d+/g, 'v2.2');
+                console.log('✓ Updated version text to v2.2');
+            }
+        });
+    }
+    
+    // Also try to update any element that contains version in the top header
+    const headerVersion = document.querySelector('.report-version, .version-display, #versionDisplay');
+    if (headerVersion) {
+        headerVersion.textContent = 'v2.2';
+        console.log('✓ Header version updated to v2.2');
+    }
+    
     // New names to add
     const newNames = [
         'Krause',
@@ -77,8 +101,6 @@
                 if (addOptionsToSelect(supervisor703, newNames, '703')) {
                     patchedCount++;
                 }
-            } else {
-                console.error('❌ Element with ID "supervisor703" not found');
             }
             
             // Apply to 704 dropdown
@@ -86,41 +108,10 @@
                 if (addOptionsToSelect(supervisor704, newNames, '704')) {
                     patchedCount++;
                 }
-            } else {
-                console.error('❌ Element with ID "supervisor704" not found');
-            }
-            
-            // Also try alternative selectors if the main ones don't work
-            if (patchedCount === 0) {
-                console.log('Trying alternative selectors...');
-                
-                // Try finding by class or other attributes
-                const allSelects = document.querySelectorAll('select');
-                allSelects.forEach(select => {
-                    // Check if this might be a 703 or 704 dropdown
-                    if (select.id.includes('703') || 
-                        select.className.includes('703') || 
-                        select.name?.includes('703')) {
-                        addOptionsToSelect(select, newNames, '703 (alternative)');
-                        patchedCount++;
-                    }
-                    if (select.id.includes('704') || 
-                        select.className.includes('704') || 
-                        select.name?.includes('704')) {
-                        addOptionsToSelect(select, newNames, '704 (alternative)');
-                        patchedCount++;
-                    }
-                });
             }
             
             if (patchedCount > 0) {
                 console.log(`✅ EMS Report Patch v2.2 applied successfully to ${patchedCount} dropdowns`);
-            } else {
-                console.error('❌ No dropdowns were patched. Check element IDs in HTML.');
-                console.log('Available select elements:', document.querySelectorAll('select').length);
-                document.querySelectorAll('select').forEach(s => {
-                    console.log('  - Select found:', s.id || s.className || 'no id/class');
-                });
             }
             
         } catch (error) {
@@ -133,7 +124,7 @@
         document.addEventListener('DOMContentLoaded', applyPatch);
     } else {
         // DOM already loaded
-        setTimeout(applyPatch, 100); // Small delay to ensure elements are rendered
+        setTimeout(applyPatch, 100);
     }
     
     // Also try to apply patch after a delay in case of dynamic content

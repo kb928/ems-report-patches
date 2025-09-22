@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.7
-// Fixes: District labels (703 Southside Command, 704 Northside Command) and logo display
+// Fixes: District labels (703 Southside Command, 704 Northside Command) for both screen and print
 // Date: 2025-01-22
 
 (function() {
@@ -9,6 +9,31 @@
     const isDeveloper = window.location.href.includes('DEV') || 
                         document.querySelector('script[src*="nocache"]') ||
                         console.warn.toString().includes('DEVELOPMENT MODE');
+    
+    // FIX DISTRICT LABELS ON SCREEN
+    const fixDistrictLabels = function() {
+        // Find and update 703 label
+        const labels = document.querySelectorAll('label, div, span');
+        labels.forEach(element => {
+            if (element.textContent === '703 - NORTH DISTRICT' || 
+                element.textContent === '703' || 
+                element.textContent.includes('703') && element.textContent.includes('NORTH')) {
+                element.textContent = '703 - SOUTHSIDE COMMAND';
+                console.log('✓ Updated 703 to Southside Command');
+            }
+            if (element.textContent === '704 - SOUTH DISTRICT' || 
+                element.textContent === '704' || 
+                element.textContent.includes('704') && element.textContent.includes('SOUTH')) {
+                element.textContent = '704 - NORTHSIDE COMMAND';
+                console.log('✓ Updated 704 to Northside Command');
+            }
+        });
+    };
+    
+    // Apply district label fixes
+    fixDistrictLabels();
+    setTimeout(fixDistrictLabels, 500);
+    setTimeout(fixDistrictLabels, 1500);
     
     // FIX LOGO DISPLAY - Force logos to appear if they exist in localStorage
     const fixLogoDisplay = function() {

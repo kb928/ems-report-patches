@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.7
-// Fixes: District labels (703 to Southside Command, 704 to Northside Command)
+// Complete version with all fixes
 // Date: 2025-01-22
 
 (function() {
@@ -12,7 +12,7 @@
     
     // FIX DISTRICT LABELS ON SCREEN
     const fixDistrictLabels = function() {
-        // Find all text nodes and replace the district labels
+        // Use TreeWalker to find and replace text nodes
         const walk = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -22,24 +22,45 @@
         
         let node;
         while (node = walk.nextNode()) {
-            if (node.nodeValue.includes('703 - NORTH DISTRICT')) {
-                node.nodeValue = node.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
-                console.log('✓ Updated 703 to Southside Command');
-            }
-            if (node.nodeValue.includes('704 - SOUTH DISTRICT')) {
-                node.nodeValue = node.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
-                console.log('✓ Updated 704 to Northside Command');
+            if (node.nodeValue) {
+                if (node.nodeValue.includes('703 - NORTH DISTRICT')) {
+                    node.nodeValue = node.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
+                    console.log('✓ Updated 703 to Southside Command');
+                }
+                if (node.nodeValue.includes('704 - SOUTH DISTRICT')) {
+                    node.nodeValue = node.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
+                    console.log('✓ Updated 704 to Northside Command');
+                }
+                // Also check for variations
+                if (node.nodeValue === '703 - NORTH DISTRICT') {
+                    node.nodeValue = '703 - SOUTHSIDE COMMAND';
+                }
+                if (node.nodeValue === '704 - SOUTH DISTRICT') {
+                    node.nodeValue = '704 - NORTHSIDE COMMAND';
+                }
             }
         }
+        
+        // Also try to find by element content
+        document.querySelectorAll('*').forEach(element => {
+            if (element.childNodes.length === 1 && element.firstChild && element.firstChild.nodeType === 3) {
+                if (element.firstChild.nodeValue && element.firstChild.nodeValue.includes('703 - NORTH DISTRICT')) {
+                    element.firstChild.nodeValue = element.firstChild.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
+                }
+                if (element.firstChild.nodeValue && element.firstChild.nodeValue.includes('704 - SOUTH DISTRICT')) {
+                    element.firstChild.nodeValue = element.firstChild.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
+                }
+            }
+        });
     };
     
-    // Apply district fixes multiple times to catch dynamic content
-    fixDistrictLabels();
-    setTimeout(fixDistrictLabels, 200);
-    setTimeout(fixDistrictLabels, 1000);
-    setTimeout(fixDistrictLabels, 2000);
+    // Apply district fixes multiple times
+    setTimeout(fixDistrictLabels, 100);
+    setTimeout(fixDistrictLabels, 500);
+    setTimeout(fixDistrictLabels, 1500);
+    setTimeout(fixDistrictLabels, 3000);
     
-    // FIX LOGO DISPLAY - Force logos to appear if they exist in localStorage
+    // FIX LOGO DISPLAY
     const fixLogoDisplay = function() {
         const leftLogo = localStorage.getItem('leftLogo');
         const rightLogo = localStorage.getItem('rightLogo');
@@ -61,15 +82,14 @@
         }
     };
     
-    // Apply logo fix
     fixLogoDisplay();
     setTimeout(fixLogoDisplay, 500);
     setTimeout(fixLogoDisplay, 1500);
     
+    // HIDE LOGO BUTTON FOR USERS ONLY
     if (!isDeveloper) {
         console.log('Production version detected - hiding logo controls');
         
-        // Hide the logo button for regular users
         const hideLogoButton = function() {
             const logoButtons = document.querySelectorAll('button');
             logoButtons.forEach(button => {
@@ -90,7 +110,6 @@
             });
         };
         
-        // Apply multiple times to ensure it sticks
         hideLogoButton();
         setTimeout(hideLogoButton, 500);
         setTimeout(hideLogoButton, 1500);
@@ -98,10 +117,9 @@
         console.log('Developer version detected - logo controls remain visible');
     }
     
-    // Update document title
+    // UPDATE VERSION NUMBERS
     document.title = document.title.replace(/v\d+\.\d+/g, 'v2.7');
     
-    // FORCE UPDATE VERSION BUTTON
     const forceUpdateVersion = function() {
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
@@ -112,7 +130,7 @@
         window.EMSPatchVersion = '2.7';
     };
     
-    // FIX DATE DISPLAY - Add day of week
+    // FIX DATE DISPLAY
     const fixDateDisplay = function() {
         const dateInput = document.getElementById('reportDate');
         if (dateInput) {
@@ -132,7 +150,6 @@
         }
     };
     
-    // Update date when changed
     document.addEventListener('change', function(e) {
         if (e.target && e.target.id === 'reportDate') {
             fixDateDisplay();
@@ -169,7 +186,6 @@
         });
     };
     
-    // Apply fixes
     forceUpdateVersion();
     fixDateDisplay();
     setTimeout(fixBorders, 100);
@@ -177,7 +193,7 @@
     setTimeout(fixBorders, 500);
     setTimeout(fixBorders, 1000);
     
-    // Override checkPatchStatus
+    // OVERRIDE CHECK PATCH STATUS
     window.checkPatchStatus = function() {
         document.querySelectorAll('.modal, .backdrop-modal').forEach(el => el.remove());
         
@@ -186,7 +202,7 @@
         modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #4a4a4a; color: white; padding: 20px; border-radius: 10px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.3); min-width: 300px;';
         
         modal.innerHTML = '<h3 style="margin-top: 0;">This page says</h3>' +
-            '<p><strong>Version: 2.7</strong> (Districts Fixed)</p>' +
+            '<p><strong>Version: 2.7</strong> (Districts Corrected)</p>' +
             '<p>Status: All systems operational</p>' +
             '<p>Last Updated: ' + new Date().toLocaleDateString() + '</p>' +
             '<p>LocalStorage: Available</p>' +
@@ -208,7 +224,7 @@
         return false;
     };
     
-    // PRINT STYLES WITH CORRECTED DISTRICT LABELS
+    // COMPREHENSIVE PRINT STYLES
     const styles = document.createElement('style');
     styles.innerHTML = '@media screen { #printDate { display: none !important; } } ' +
         '@media print { ' +
@@ -236,21 +252,20 @@
     
     document.head.appendChild(styles);
     
-    // Names for 703/704 dropdowns
+    // SUPERVISOR NAMES
     const supervisorNames = [
         'Krause', 'Morrison', 'Klaves', 'Phifer', 'Beckenholdt',
         'Simms', 'Carbrey', 'Fournier', 'Lammert', 'Fendelman',
         'Lalumandier', 'Free', 'Powers', 'Brickey', 'Hale', 'Dobelmann'
     ];
     
-    // Deputy Chief names with A- prefix
     const deputyChiefNames = [
         'A-Krause',
         'A-Beckenholdt',
         'A-Fournier'
     ];
     
-    // Add names to dropdowns
+    // ADD NAMES TO DROPDOWNS
     function applyPatch() {
         try {
             const supervisor703 = document.getElementById('supervisor703');
@@ -293,10 +308,8 @@
     } else {
         setTimeout(applyPatch, 100);
     }
-    
     setTimeout(applyPatch, 1000);
-    
 })();
 
 window.EMSPatchVersion = '2.7';
-console.log('EMS Report Patch Version: 2.7 - Districts Corrected');
+console.log('EMS Report Patch Version: 2.7 - Complete');

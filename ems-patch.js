@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.7
-// Complete version with all fixes
+// Aggressive district label override
 // Date: 2025-01-22
 
 (function() {
@@ -10,54 +10,55 @@
                         document.querySelector('script[src*="nocache"]') ||
                         console.warn.toString().includes('DEVELOPMENT MODE');
     
-    // FIX DISTRICT LABELS ON SCREEN
+    // AGGRESSIVE DISTRICT LABEL FIX - Use MutationObserver to catch any changes
     const fixDistrictLabels = function() {
-        // Use TreeWalker to find and replace text nodes
-        const walk = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
-        
-        let node;
-        while (node = walk.nextNode()) {
-            if (node.nodeValue) {
-                if (node.nodeValue.includes('703 - NORTH DISTRICT')) {
-                    node.nodeValue = node.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
-                    console.log('✓ Updated 703 to Southside Command');
+        // Create a MutationObserver to watch for any text changes
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    const target = mutation.target;
+                    if (target.nodeType === Node.TEXT_NODE) {
+                        if (target.nodeValue && target.nodeValue.includes('703 - NORTH DISTRICT')) {
+                            target.nodeValue = target.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
+                        }
+                        if (target.nodeValue && target.nodeValue.includes('704 - SOUTH DISTRICT')) {
+                            target.nodeValue = target.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
+                        }
+                    }
                 }
-                if (node.nodeValue.includes('704 - SOUTH DISTRICT')) {
-                    node.nodeValue = node.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
-                    console.log('✓ Updated 704 to Northside Command');
-                }
-                // Also check for variations
-                if (node.nodeValue === '703 - NORTH DISTRICT') {
-                    node.nodeValue = '703 - SOUTHSIDE COMMAND';
-                }
-                if (node.nodeValue === '704 - SOUTH DISTRICT') {
-                    node.nodeValue = '704 - NORTHSIDE COMMAND';
-                }
-            }
-        }
-        
-        // Also try to find by element content
-        document.querySelectorAll('*').forEach(element => {
-            if (element.childNodes.length === 1 && element.firstChild && element.firstChild.nodeType === 3) {
-                if (element.firstChild.nodeValue && element.firstChild.nodeValue.includes('703 - NORTH DISTRICT')) {
-                    element.firstChild.nodeValue = element.firstChild.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
-                }
-                if (element.firstChild.nodeValue && element.firstChild.nodeValue.includes('704 - SOUTH DISTRICT')) {
-                    element.firstChild.nodeValue = element.firstChild.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
-                }
-            }
+            });
         });
+        
+        // Start observing the entire document for text changes
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            characterDataOldValue: true
+        });
+        
+        // Also do an initial sweep
+        const replaceInNode = function(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                if (node.nodeValue && node.nodeValue.includes('703 - NORTH DISTRICT')) {
+                    node.nodeValue = node.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
+                }
+                if (node.nodeValue && node.nodeValue.includes('704 - SOUTH DISTRICT')) {
+                    node.nodeValue = node.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
+                }
+            } else {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    replaceInNode(node.childNodes[i]);
+                }
+            }
+        };
+        
+        replaceInNode(document.body);
     };
     
-    // Apply district fixes multiple times
-    setTimeout(fixDistrictLabels, 100);
-    setTimeout(fixDistrictLabels, 500);
-    setTimeout(fixDistrictLabels, 1500);
+    // Apply the fix after a delay to let the page load
+    setTimeout(fixDistrictLabels, 1000);
+    setTimeout(fixDistrictLabels, 2000);
     setTimeout(fixDistrictLabels, 3000);
     
     // FIX LOGO DISPLAY
@@ -100,14 +101,6 @@
                     console.log('✓ Logo button hidden');
                 }
             });
-            
-            const unlockButtons = document.querySelectorAll('button');
-            unlockButtons.forEach(button => {
-                if (button.textContent.includes('Unlock') && 
-                    button.onclick && button.onclick.toString().includes('logo')) {
-                    button.style.display = 'none';
-                }
-            });
         };
         
         hideLogoButton();
@@ -130,6 +123,8 @@
         window.EMSPatchVersion = '2.7';
     };
     
+    forceUpdateVersion();
+    
     // FIX DATE DISPLAY
     const fixDateDisplay = function() {
         const dateInput = document.getElementById('reportDate');
@@ -150,6 +145,7 @@
         }
     };
     
+    fixDateDisplay();
     document.addEventListener('change', function(e) {
         if (e.target && e.target.id === 'reportDate') {
             fixDateDisplay();
@@ -186,10 +182,7 @@
         });
     };
     
-    forceUpdateVersion();
-    fixDateDisplay();
     setTimeout(fixBorders, 100);
-    setTimeout(fixDateDisplay, 200);
     setTimeout(fixBorders, 500);
     setTimeout(fixBorders, 1000);
     
@@ -202,7 +195,7 @@
         modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #4a4a4a; color: white; padding: 20px; border-radius: 10px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.3); min-width: 300px;';
         
         modal.innerHTML = '<h3 style="margin-top: 0;">This page says</h3>' +
-            '<p><strong>Version: 2.7</strong> (Districts Corrected)</p>' +
+            '<p><strong>Version: 2.7</strong> (Districts Fixed)</p>' +
             '<p>Status: All systems operational</p>' +
             '<p>Last Updated: ' + new Date().toLocaleDateString() + '</p>' +
             '<p>LocalStorage: Available</p>' +
@@ -224,7 +217,7 @@
         return false;
     };
     
-    // COMPREHENSIVE PRINT STYLES
+    // PRINT STYLES
     const styles = document.createElement('style');
     styles.innerHTML = '@media screen { #printDate { display: none !important; } } ' +
         '@media print { ' +
@@ -232,23 +225,11 @@
         '@page { size: letter; margin: 0.5in; } ' +
         '.quote-section, .units-section, .supervisors-section, .tasks-section, .announcements-section, div[style*="border"], .editor-content { page-break-inside: avoid !important; break-inside: avoid !important; } ' +
         'h2, h3 { page-break-after: avoid !important; } ' +
-        'div:has(> h3:contains("IN SERVICE")), div:has(> h3:contains("OUT OF SERVICE")) { page-break-inside: avoid !important; display: inline-block !important; width: 48% !important; vertical-align: top !important; } ' +
-        'div:has(> h3:contains("ABBOTT")), div:has(> h3:contains("MEDIC ONE")) { page-break-inside: avoid !important; margin-bottom: 15px !important; } ' +
-        'div:has(> h2:contains("SUPERVISORS")) { page-break-inside: avoid !important; } ' +
-        '.editor-content { min-height: auto !important; padding: 10px !important; } ' +
-        'div[style*="margin-bottom"] { margin-bottom: 10px !important; } ' +
         '#reportDate, input[type="date"] { display: none !important; } ' +
         '#printDate { display: inline !important; font-weight: bold !important; font-size: 14pt !important; } ' +
         '#inServiceSelect, #oosSelect, select, button { display: none !important; } ' +
         '#deputyChief, #supervisor703, #supervisor704 { display: inline !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; border: none !important; background: none !important; font-weight: bold !important; text-align: center !important; width: 100% !important; padding: 0 !important; margin: 0 !important; } ' +
-        'select::-ms-expand { display: none !important; } ' +
-        'label:contains("703")::before { content: ""; } label:contains("703") { font-size: 0 !important; } label:contains("703")::after { content: "703 - SOUTHSIDE COMMAND" !important; font-size: 12pt !important; font-weight: bold !important; } ' +
-        'label:contains("704")::before { content: ""; } label:contains("704") { font-size: 0 !important; } label:contains("704")::after { content: "704 - NORTHSIDE COMMAND" !important; font-size: 12pt !important; font-weight: bold !important; } ' +
-        'div:has(#supervisor703), div:has(#supervisor704) { text-align: center !important; } ' +
-        'div[style*="border: 2px solid rgb(0, 123, 255)"], div[style*="border: 2px solid #007bff"] { border: 2px solid #007bff !important; background-color: #f0f8ff !important; } ' +
-        'div[style*="border: 2px solid #dc3545"], div[style*="border: 2px solid rgb(220, 53, 69)"] { border: 2px solid #dc3545 !important; background-color: #fff8f8 !important; } ' +
-        '.logo-placeholder, div:has(> img[alt*="ogo"]) { border: none !important; } ' +
-        'h1 { color: #dc3545 !important; } }';
+        'select::-ms-expand { display: none !important; } }';
     
     document.head.appendChild(styles);
     
@@ -259,17 +240,14 @@
         'Lalumandier', 'Free', 'Powers', 'Brickey', 'Hale', 'Dobelmann'
     ];
     
-    const deputyChiefNames = [
-        'A-Krause',
-        'A-Beckenholdt',
-        'A-Fournier'
-    ];
+    const deputyChiefNames = ['A-Krause', 'A-Beckenholdt', 'A-Fournier'];
     
     // ADD NAMES TO DROPDOWNS
     function applyPatch() {
         try {
             const supervisor703 = document.getElementById('supervisor703');
             const supervisor704 = document.getElementById('supervisor704');
+            const deputyChief = document.getElementById('deputyChief');
             
             function addOptionsToSelect(selectElement, names) {
                 if (!selectElement) return;
@@ -290,12 +268,7 @@
             
             if (supervisor703) addOptionsToSelect(supervisor703, supervisorNames);
             if (supervisor704) addOptionsToSelect(supervisor704, supervisorNames);
-            
-            const deputyChief = document.getElementById('deputyChief');
-            if (deputyChief) {
-                addOptionsToSelect(deputyChief, deputyChiefNames);
-                console.log('✓ Added Deputy Chief names');
-            }
+            if (deputyChief) addOptionsToSelect(deputyChief, deputyChiefNames);
             
             console.log('✅ Patch v2.7 applied successfully');
         } catch (error) {
@@ -303,13 +276,9 @@
         }
     }
     
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyPatch);
-    } else {
-        setTimeout(applyPatch, 100);
-    }
+    setTimeout(applyPatch, 100);
     setTimeout(applyPatch, 1000);
 })();
 
 window.EMSPatchVersion = '2.7';
-console.log('EMS Report Patch Version: 2.7 - Complete');
+console.log('EMS Report Patch Version: 2.7 - MutationObserver Active');

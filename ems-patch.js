@@ -1,5 +1,5 @@
 // EMS Report System Patch v2.7
-// Fixes: District labels (703 Southside Command, 704 Northside Command) for both screen and print
+// Fixes: District labels (703 to Southside Command, 704 to Northside Command)
 // Date: 2025-01-22
 
 (function() {
@@ -12,28 +12,32 @@
     
     // FIX DISTRICT LABELS ON SCREEN
     const fixDistrictLabels = function() {
-        // Find and update 703 label
-        const labels = document.querySelectorAll('label, div, span');
-        labels.forEach(element => {
-            if (element.textContent === '703 - NORTH DISTRICT' || 
-                element.textContent === '703' || 
-                element.textContent.includes('703') && element.textContent.includes('NORTH')) {
-                element.textContent = '703 - SOUTHSIDE COMMAND';
+        // Find all text nodes and replace the district labels
+        const walk = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+        
+        let node;
+        while (node = walk.nextNode()) {
+            if (node.nodeValue.includes('703 - NORTH DISTRICT')) {
+                node.nodeValue = node.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
                 console.log('✓ Updated 703 to Southside Command');
             }
-            if (element.textContent === '704 - SOUTH DISTRICT' || 
-                element.textContent === '704' || 
-                element.textContent.includes('704') && element.textContent.includes('SOUTH')) {
-                element.textContent = '704 - NORTHSIDE COMMAND';
+            if (node.nodeValue.includes('704 - SOUTH DISTRICT')) {
+                node.nodeValue = node.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
                 console.log('✓ Updated 704 to Northside Command');
             }
-        });
+        }
     };
     
-    // Apply district label fixes
+    // Apply district fixes multiple times to catch dynamic content
     fixDistrictLabels();
-    setTimeout(fixDistrictLabels, 500);
-    setTimeout(fixDistrictLabels, 1500);
+    setTimeout(fixDistrictLabels, 200);
+    setTimeout(fixDistrictLabels, 1000);
+    setTimeout(fixDistrictLabels, 2000);
     
     // FIX LOGO DISPLAY - Force logos to appear if they exist in localStorage
     const fixLogoDisplay = function() {

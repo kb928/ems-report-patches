@@ -1,65 +1,62 @@
-// EMS Report System Patch v2.7
-// Aggressive district label override
+// EMS Report System Patch v2.8
+// Fixes: IN SERVICE color and compact print layout
 // Date: 2025-01-22
 
 (function() {
-    console.log('Applying EMS Report Patch v2.7...');
+    console.log('Applying EMS Report Patch v2.8...');
     
     // CHECK IF THIS IS DEVELOPER VERSION
     const isDeveloper = window.location.href.includes('DEV') || 
                         document.querySelector('script[src*="nocache"]') ||
                         console.warn.toString().includes('DEVELOPMENT MODE');
     
-    // AGGRESSIVE DISTRICT LABEL FIX - Use MutationObserver to catch any changes
-    const fixDistrictLabels = function() {
-        // Create a MutationObserver to watch for any text changes
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList' || mutation.type === 'characterData') {
-                    const target = mutation.target;
-                    if (target.nodeType === Node.TEXT_NODE) {
-                        if (target.nodeValue && target.nodeValue.includes('703 - NORTH DISTRICT')) {
-                            target.nodeValue = target.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
-                        }
-                        if (target.nodeValue && target.nodeValue.includes('704 - SOUTH DISTRICT')) {
-                            target.nodeValue = target.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
-                        }
-                    }
-                }
-            });
-        });
-        
-        // Start observing the entire document for text changes
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            characterData: true,
-            characterDataOldValue: true
-        });
-        
-        // Also do an initial sweep
-        const replaceInNode = function(node) {
-            if (node.nodeType === Node.TEXT_NODE) {
-                if (node.nodeValue && node.nodeValue.includes('703 - NORTH DISTRICT')) {
-                    node.nodeValue = node.nodeValue.replace('703 - NORTH DISTRICT', '703 - SOUTHSIDE COMMAND');
-                }
-                if (node.nodeValue && node.nodeValue.includes('704 - SOUTH DISTRICT')) {
-                    node.nodeValue = node.nodeValue.replace('704 - SOUTH DISTRICT', '704 - NORTHSIDE COMMAND');
+    // FIX DATE DISPLAY - Corrected timezone issue
+    const fixDateDisplay = function() {
+        const dateInput = document.getElementById('reportDate');
+        if (dateInput) {
+            let dateValue = dateInput.value;
+            if (dateValue) {
+                const [year, month, day] = dateValue.split('-');
+                const date = new Date(year, month - 1, day, 12, 0, 0);
+                const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
+                const formattedDate = date.toLocaleDateString('en-US', options);
+                
+                if (!document.getElementById('printDate')) {
+                    const printDate = document.createElement('span');
+                    printDate.id = 'printDate';
+                    printDate.style.display = 'none';
+                    printDate.textContent = formattedDate;
+                    dateInput.parentNode.insertBefore(printDate, dateInput.nextSibling);
+                } else {
+                    document.getElementById('printDate').textContent = formattedDate;
                 }
             } else {
-                for (let i = 0; i < node.childNodes.length; i++) {
-                    replaceInNode(node.childNodes[i]);
+                const today = new Date();
+                today.setHours(12, 0, 0, 0);
+                const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
+                const formattedDate = today.toLocaleDateString('en-US', options);
+                
+                if (!document.getElementById('printDate')) {
+                    const printDate = document.createElement('span');
+                    printDate.id = 'printDate';
+                    printDate.style.display = 'none';
+                    printDate.textContent = formattedDate;
+                    dateInput.parentNode.insertBefore(printDate, dateInput.nextSibling);
+                } else {
+                    document.getElementById('printDate').textContent = formattedDate;
                 }
             }
-        };
-        
-        replaceInNode(document.body);
+        }
     };
     
-    // Apply the fix after a delay to let the page load
-    setTimeout(fixDistrictLabels, 1000);
-    setTimeout(fixDistrictLabels, 2000);
-    setTimeout(fixDistrictLabels, 3000);
+    fixDateDisplay();
+    setTimeout(fixDateDisplay, 500);
+    
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'reportDate') {
+            fixDateDisplay();
+        }
+    });
     
     // FIX LOGO DISPLAY
     const fixLogoDisplay = function() {
@@ -111,80 +108,76 @@
     }
     
     // UPDATE VERSION NUMBERS
-    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.7');
+    document.title = document.title.replace(/v\d+\.\d+/g, 'v2.8');
     
     const forceUpdateVersion = function() {
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
             if (button.textContent.includes('v2.') || button.textContent.includes('📊')) {
-                button.innerHTML = '📊 v2.7';
+                button.innerHTML = '📊 v2.8';
             }
         });
-        window.EMSPatchVersion = '2.7';
+        window.EMSPatchVersion = '2.8';
     };
     
     forceUpdateVersion();
     
-    // FIX DATE DISPLAY
-    const fixDateDisplay = function() {
-        const dateInput = document.getElementById('reportDate');
-        if (dateInput) {
-            const date = dateInput.value ? new Date(dateInput.value) : new Date();
-            const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
-            const formattedDate = date.toLocaleDateString('en-US', options);
-            
-            if (!document.getElementById('printDate')) {
-                const printDate = document.createElement('span');
-                printDate.id = 'printDate';
-                printDate.style.display = 'none';
-                printDate.textContent = formattedDate;
-                dateInput.parentNode.insertBefore(printDate, dateInput.nextSibling);
-            } else {
-                document.getElementById('printDate').textContent = formattedDate;
-            }
-        }
-    };
-    
-    fixDateDisplay();
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.id === 'reportDate') {
-            fixDateDisplay();
-        }
-    });
-    
-    // FIX BORDERS
+    // FIX BORDERS - Force IN SERVICE to BLUE
     const fixBorders = function() {
+        // Find all elements
         const allElements = document.querySelectorAll('*');
         
         allElements.forEach(element => {
             const computedStyle = window.getComputedStyle(element);
             
+            // Check for any green borders
             if (computedStyle.borderColor === 'rgb(40, 167, 69)' || 
-                element.style.border && element.style.border.includes('#28a745')) {
+                computedStyle.borderColor === 'rgb(0, 128, 0)' ||
+                computedStyle.borderColor === 'green' ||
+                element.style.border && (element.style.border.includes('#28a745') || 
+                                        element.style.border.includes('green'))) {
                 
+                // Check if this is the IN SERVICE section
                 const hasInService = element.innerHTML && element.innerHTML.includes('IN SERVICE') && 
                                    !element.innerHTML.includes('OUT OF SERVICE');
                 const hasLogo = element.querySelector('img[alt*="ogo"]') || element.className.includes('logo');
                 
                 if (hasInService) {
+                    // Force blue border for IN SERVICE
                     element.style.setProperty('border', '2px solid #007bff', 'important');
+                    element.style.setProperty('border-color', '#007bff', 'important');
                     element.style.setProperty('background-color', '#f0f8ff', 'important');
+                    console.log('✓ IN SERVICE changed to blue');
                 } else if (hasLogo) {
+                    // Remove borders from logos
                     element.style.setProperty('border', 'none', 'important');
+                }
+            }
+            
+            // Also check for green background
+            if (element.style.backgroundColor === 'rgb(212, 237, 218)' || 
+                element.style.backgroundColor === '#d4edda') {
+                if (element.innerHTML && element.innerHTML.includes('IN SERVICE') && 
+                    !element.innerHTML.includes('OUT OF SERVICE')) {
+                    element.style.setProperty('background-color', '#f0f8ff', 'important');
                 }
             }
         });
         
-        document.querySelectorAll('h3, div').forEach(el => {
+        // Change IN SERVICE header text to blue
+        document.querySelectorAll('h3, div, span').forEach(el => {
             if (el.textContent === 'IN SERVICE') {
                 el.style.color = '#007bff';
+                el.style.setProperty('color', '#007bff', 'important');
             }
         });
     };
     
+    // Apply border fixes multiple times
     setTimeout(fixBorders, 100);
     setTimeout(fixBorders, 500);
     setTimeout(fixBorders, 1000);
+    setTimeout(fixBorders, 2000);
     
     // OVERRIDE CHECK PATCH STATUS
     window.checkPatchStatus = function() {
@@ -195,12 +188,12 @@
         modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #4a4a4a; color: white; padding: 20px; border-radius: 10px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.3); min-width: 300px;';
         
         modal.innerHTML = '<h3 style="margin-top: 0;">This page says</h3>' +
-            '<p><strong>Version: 2.7</strong> (Districts Fixed)</p>' +
+            '<p><strong>Version: 2.8</strong> (Print Fix)</p>' +
             '<p>Status: All systems operational</p>' +
             '<p>Last Updated: ' + new Date().toLocaleDateString() + '</p>' +
             '<p>LocalStorage: Available</p>' +
             '<p>Editors: 7 found</p>' +
-            '<p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.7 Active</p>' +
+            '<p style="color: #4CAF50; font-weight: bold;">✓ Patch v2.8 Active</p>' +
             '<button onclick="this.parentElement.remove(); document.querySelector(\'.backdrop-modal\')?.remove();" style="background: white; color: #333; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; margin-top: 10px; font-weight: bold;">OK</button>';
         
         document.body.appendChild(modal);
@@ -217,19 +210,145 @@
         return false;
     };
     
-    // PRINT STYLES
+    // COMPREHENSIVE PRINT STYLES - MORE COMPACT
     const styles = document.createElement('style');
-    styles.innerHTML = '@media screen { #printDate { display: none !important; } } ' +
-        '@media print { ' +
-        '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } ' +
-        '@page { size: letter; margin: 0.5in; } ' +
-        '.quote-section, .units-section, .supervisors-section, .tasks-section, .announcements-section, div[style*="border"], .editor-content { page-break-inside: avoid !important; break-inside: avoid !important; } ' +
-        'h2, h3 { page-break-after: avoid !important; } ' +
-        '#reportDate, input[type="date"] { display: none !important; } ' +
-        '#printDate { display: inline !important; font-weight: bold !important; font-size: 14pt !important; } ' +
-        '#inServiceSelect, #oosSelect, select, button { display: none !important; } ' +
-        '#deputyChief, #supervisor703, #supervisor704 { display: inline !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; border: none !important; background: none !important; font-weight: bold !important; text-align: center !important; width: 100% !important; padding: 0 !important; margin: 0 !important; } ' +
-        'select::-ms-expand { display: none !important; } }';
+    styles.innerHTML = `
+        @media screen { 
+            #printDate { display: none !important; }
+        }
+        
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            @page {
+                size: letter;
+                margin: 0.3in;
+            }
+            
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Reduce spacing between sections */
+            .quote-section, .units-section, .supervisors-section, 
+            .tasks-section, .announcements-section {
+                margin-bottom: 10px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            /* Compact editor content areas */
+            .editor-content, [contenteditable], 
+            div[style*="min-height: 100px"],
+            div[style*="min-height: 200px"] {
+                min-height: auto !important;
+                height: auto !important;
+                padding: 8px !important;
+                margin: 5px 0 !important;
+            }
+            
+            /* IN SERVICE and OUT OF SERVICE side by side */
+            div:has(h3:contains("IN SERVICE")),
+            div:has(h3:contains("OUT OF SERVICE")) {
+                display: inline-block !important;
+                width: 48% !important;
+                vertical-align: top !important;
+                margin-right: 2% !important;
+                page-break-inside: avoid !important;
+            }
+            
+            /* Force IN SERVICE to be BLUE in print */
+            div[style*="border: 2px solid rgb(40, 167, 69)"],
+            div[style*="border: 2px solid #28a745"],
+            div[style*="border-color: rgb(40, 167, 69)"],
+            *:has(> h3:contains("IN SERVICE")):not(:has(h3:contains("OUT OF SERVICE"))) {
+                border: 2px solid #007bff !important;
+                border-color: #007bff !important;
+                background-color: #f0f8ff !important;
+            }
+            
+            h3:contains("IN SERVICE") {
+                color: #007bff !important;
+            }
+            
+            /* Force OUT OF SERVICE to be RED */
+            div[style*="border: 2px solid #dc3545"],
+            div[style*="border: 2px solid rgb(220, 53, 69)"],
+            *:has(> h3:contains("OUT OF SERVICE")) {
+                border: 2px solid #dc3545 !important;
+                border-color: #dc3545 !important;
+                background-color: #fff8f8 !important;
+            }
+            
+            h3:contains("OUT OF SERVICE") {
+                color: #dc3545 !important;
+            }
+            
+            /* Reduce header spacing */
+            h1, h2, h3 {
+                margin-top: 10px !important;
+                margin-bottom: 10px !important;
+                page-break-after: avoid !important;
+            }
+            
+            /* Main title in red */
+            h1 {
+                color: #dc3545 !important;
+                margin-bottom: 15px !important;
+            }
+            
+            /* Compact Abbott and Medic One sections */
+            div:has(h3:contains("ABBOTT")),
+            div:has(h3:contains("MEDIC ONE")) {
+                margin-bottom: 10px !important;
+                page-break-inside: avoid !important;
+            }
+            
+            /* Hide UI elements */
+            #reportDate, input[type="date"],
+            #inServiceSelect, #oosSelect, 
+            button, select:not(#deputyChief):not(#supervisor703):not(#supervisor704) {
+                display: none !important;
+            }
+            
+            /* Show formatted date */
+            #printDate {
+                display: inline !important;
+                font-weight: bold !important;
+                font-size: 14pt !important;
+            }
+            
+            /* Style supervisor dropdowns for print */
+            #deputyChief, #supervisor703, #supervisor704 {
+                display: inline !important;
+                -webkit-appearance: none !important;
+                -moz-appearance: none !important;
+                appearance: none !important;
+                border: none !important;
+                background: none !important;
+                font-weight: bold !important;
+                text-align: center !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* Remove extra padding/margins */
+            div[style*="padding: 20px"],
+            div[style*="padding: 15px"] {
+                padding: 10px !important;
+            }
+            
+            /* No borders on logos */
+            .logo-placeholder, 
+            div:has(> img[alt*="ogo"]) {
+                border: none !important;
+            }
+        }`;
     
     document.head.appendChild(styles);
     
@@ -270,7 +389,7 @@
             if (supervisor704) addOptionsToSelect(supervisor704, supervisorNames);
             if (deputyChief) addOptionsToSelect(deputyChief, deputyChiefNames);
             
-            console.log('✅ Patch v2.7 applied successfully');
+            console.log('✅ Patch v2.8 applied successfully');
         } catch (error) {
             console.error('Error:', error);
         }
@@ -280,5 +399,5 @@
     setTimeout(applyPatch, 1000);
 })();
 
-window.EMSPatchVersion = '2.7';
-console.log('EMS Report Patch Version: 2.7 - MutationObserver Active');
+window.EMSPatchVersion = '2.8';
+console.log('EMS Report Patch Version: 2.8 - Print Layout Optimized');
